@@ -46,3 +46,8 @@ skills/talking-head-recut/references/frames/polaroid.html
 # explicitly (not registry/examples/**/*.html) so hand-authored example HTML still
 # gets formatted.
 registry/examples/warm-grain/compositions/captions.html
+
+# bizmafhoom: vendored libs + generated simulation data
+bizmafhoom/**/vendor/**
+bizmafhoom/**/assets/sim-data.js
+bizmafhoom/**/assets/sim.json

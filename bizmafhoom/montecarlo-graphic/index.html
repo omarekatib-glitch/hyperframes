@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Monte Carlo Simulation — بيزنس مفهوم B-roll</title>
+    <script src="vendor/gsap.min.js"></script>
+    <script src="assets/beats.js"></script>
+    <script src="assets/sim-data.js"></script>
+    <script src="vendor/kit/lib/gbm.js"></script>
+    <script src="vendor/kit/path-fan/path-fan.js"></script>
+    <script src="vendor/kit/histogram/histogram.js"></script>
+    <script src="vendor/kit/var-marker/var-marker.js"></script>
+    <style>
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 900;
+        src: url("fonts/cairo-arabic-900-normal.woff2") format("woff2");
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1,
+          U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74,
+          U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 900;
+        src: url("fonts/cairo-latin-900-normal.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Inter";
+        font-weight: 500;
+        src: url("fonts/inter-latin-500-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Inter";
+        font-weight: 700;
+        src: url("fonts/inter-latin-700-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Inter";
+        font-weight: 800;
+        src: url("fonts/inter-latin-800-normal.woff2") format("woff2");
+      }
+
+      :root {
+        --paper: #f3efe6;
+        --paper-card: #fbf8f1;
+        --navy: #1f2e5a;
+        --navy-soft: #4d5877;
+        --burgundy: #7a1f2b;
+        --gold: #c9a24a;
+        --ink: #111111;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        font-family: "Inter", sans-serif;
+        color: var(--navy);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+      }
+      .ar {
+        font-family: "Cairo", sans-serif;
+        font-weight: 900;
+        direction: rtl;
+      }
+      .num {
+        font-family: "Inter", sans-serif;
+        font-variant-numeric: tabular-nums;
+        direction: ltr;
+      }
+
+      /* ---------- paper ground ---------- */
+      #paper-ground {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(120% 80% at 50% 45%, rgba(255, 253, 247, 0.9) 0%, rgba(243, 239, 230, 0) 60%),
+          radial-gradient(140% 100% at 50% 50%, rgba(0, 0, 0, 0) 60%, rgba(120, 96, 60, 0.1) 100%),
+          var(--paper);
+      }
+      #paper-grain {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        mix-blend-mode: multiply;
+      }
+
+      /* ---------- torn paper (card + strip) ---------- */
+      .paper-shadow {
+        position: absolute;
+        filter: drop-shadow(0 18px 22px rgba(31, 46, 90, 0.16))
+          drop-shadow(0 3px 4px rgba(17, 17, 17, 0.12));
+      }
+      .paper-reveal {
+        width: 100%;
+        height: 100%;
+      }
+      .paper-sheet {
+        width: 100%;
+        height: 100%;
+        background:
+          radial-gradient(120% 90% at 30% 20%, #fffdf8 0%, var(--paper-card) 55%, #f1ebdd 100%);
+        position: relative;
+      }
+
+      /* ---------- HOOK ---------- */
+      #card-wrap {
+        left: 100px;
+        top: 640px;
+        width: 880px;
+        height: 540px;
+      }
+      #card .card-inner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .card-en {
+        font-family: "Inter", sans-serif;
+        font-weight: 800;
+        font-size: 104px;
+        line-height: 1;
+        letter-spacing: -0.035em;
+        color: var(--navy);
+        white-space: nowrap;
+      }
+      .card-rule {
+        width: 132px;
+        height: 8px;
+        margin: 34px 0 26px;
+        background: var(--gold);
+        border-radius: 4px;
+      }
+      #card-ar {
+        font-size: 80px;
+        line-height: 1.25;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+
+      /* ---------- CHART ---------- */
+      #chart-svg {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 1920px;
+      }
+      #chart-html {
+        position: absolute;
+        inset: 0;
+      }
+      .grid-label {
+        position: absolute;
+        left: 40px;
+        width: 88px;
+        text-align: right;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--navy-soft);
+        line-height: 1;
+      }
+      #s0-label {
+        position: absolute;
+        left: 20px;
+        width: 108px;
+        text-align: right;
+        font-size: 44px;
+        font-weight: 800;
+        color: var(--navy);
+        line-height: 1;
+      }
+      #kicker {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 300px;
+        text-align: center;
+        font-size: 64px;
+        line-height: 1.3;
+        color: var(--navy);
+      }
+      #counter {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 272px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #counter-num {
+        display: block;
+        font-size: 132px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        color: var(--navy);
+      }
+      #counter-word {
+        display: block;
+        margin-top: 4px;
+        font-size: 52px;
+        line-height: 1.3;
+        color: var(--navy);
+      }
+      #axis-caption {
+        position: absolute;
+        left: 150px;
+        width: 585px;
+        top: 1432px;
+        text-align: center;
+        font-size: 34px;
+        line-height: 1.3;
+        color: var(--navy-soft);
+      }
+      #axis-caption .num {
+        font-weight: 700;
+        font-size: 30px;
+      }
+      #mean-chip {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 8px 22px 10px;
+        border-radius: 10px;
+        background: var(--gold);
+        color: var(--navy);
+        white-space: nowrap;
+      }
+      #mean-chip .ar {
+        font-size: 38px;
+        line-height: 1.3;
+      }
+      #mean-chip .num {
+        font-size: 42px;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .var-marker-label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .var-marker-chip {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+        padding: 12px 22px;
+        border-radius: 10px;
+        color: #fbf8f1;
+        white-space: nowrap;
+      }
+      .var-marker-key {
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+        font-size: 36px;
+        line-height: 1;
+      }
+      .var-marker-value {
+        font-family: "Inter", sans-serif;
+        font-weight: 800;
+        font-size: 50px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .var-marker-sub {
+        margin-top: 8px;
+        font-family: "Cairo", sans-serif;
+        font-weight: 900;
+        font-size: 44px;
+        line-height: 1.3;
+        direction: rtl;
+        white-space: nowrap;
+      }
+
+      /* ---------- TAKEAWAY ---------- */
+      #dim {
+        position: absolute;
+        inset: 0;
+        background: var(--paper);
+      }
+      #strip-wrap {
+        left: 50px;
+        top: 780px;
+        width: 980px;
+        height: 330px;
+      }
+      #strip .strip-inner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .strip-line {
+        font-size: 76px;
+        line-height: 1.35;
+        color: var(--navy);
+        white-space: nowrap;
+      }
+      #strip-line-2 {
+        position: relative;
+      }
+      #strip-underline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 6px;
+        height: 12px;
+        background: var(--gold);
+        border-radius: 6px;
+        z-index: -1;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="montecarlo"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-duration="15"
+    >
+      <!-- Paper ground + static grain (paper doesn't boil — the grain holds still). -->
+      <div id="paper" class="clip" data-start="0" data-duration="15" data-track-index="0">
+        <div id="paper-ground"></div>
+        <svg id="paper-grain" viewBox="0 0 1080 1920" aria-hidden="true">
+          <filter id="grain-fine" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="11" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.22  0 0 0 -1.1 0.62" />
+          </filter>
+          <filter id="grain-mottle" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="3" seed="4" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0.45  0 0 0 0 0.38  0 0 0 0 0.28  0 0 0 -1.4 0.8" />
+          </filter>
+          <rect width="1080" height="1920" filter="url(#grain-fine)" opacity="0.32" />
+          <rect width="1080" height="1920" filter="url(#grain-mottle)" opacity="0.22" />
+        </svg>
+      </div>
+
+      <!-- 2.4–15: the chart world (dot → path → fan → histogram → VaR). -->
+      <div id="chart" class="clip" data-start="2.4" data-duration="12.6" data-track-index="1">
+        <svg id="chart-svg" viewBox="0 0 1080 1920" aria-hidden="true">
+          <defs>
+            <clipPath id="plot-clip"><rect x="0" y="470" width="1080" height="970" /></clipPath>
+          </defs>
+          <g id="grid"></g>
+          <g id="var-zone-g"></g>
+          <g id="fan-g" clip-path="url(#plot-clip)"></g>
+          <g id="hist-g"></g>
+          <g id="drop-dots"></g>
+          <g id="mean-g">
+            <line id="mean-line" x1="150" x2="995" stroke="#C9A24A" stroke-width="5" stroke-linecap="round" />
+          </g>
+          <g id="var-g"></g>
+          <circle id="origin-halo" r="26" fill="#C9A24A" opacity="0.25" />
+          <circle id="origin-dot" r="14" fill="#C9A24A" stroke="#111111" stroke-width="3" />
+        </svg>
+        <div id="chart-html">
+          <div id="kicker" class="ar">مسار واحد محتمل</div>
+          <div id="counter">
+            <span id="counter-num" class="num">0</span>
+            <span id="counter-word" class="ar">سيناريو</span>
+          </div>
+          <div id="s0-label" class="num">100</div>
+          <div id="axis-caption" class="ar">سنة واحدة · <span class="num">252</span> يوم تداول</div>
+          <div id="mean-chip" dir="rtl">
+            <span class="ar">المتوسط</span>
+            <span id="mean-value" class="num">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 0–2.95 HOOK: paper-cut term card. -->
+      <div id="hook" class="clip" data-start="0" data-duration="2.95" data-track-index="2">
+        <div id="card-wrap" class="paper-shadow">
+          <div id="card-reveal" class="paper-reveal">
+            <div id="card" class="paper-sheet">
+              <div class="card-inner">
+                <div class="card-en">Monte Carlo</div>
+                <div class="card-en">Simulation</div>
+                <div id="card-rule" class="card-rule"></div>
+                <div id="card-ar" class="ar">محاكاة مونت كارلو</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 13.4–15 TAKEAWAY: dim + paper strip. -->
+      <div id="takeaway" class="clip" data-start="13.4" data-duration="1.6" data-track-index="3">
+        <div id="dim"></div>
+        <div id="strip-wrap" class="paper-shadow">
+          <div id="strip-reveal" class="paper-reveal">
+            <div id="strip" class="paper-sheet">
+              <div class="strip-inner">
+                <div id="strip-line-1" class="strip-line ar">مش بنتوقع المستقبل…</div>
+                <div id="strip-line-2" class="strip-line ar">
+                  بنقيس احتمالاته
+                  <div id="strip-underline"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SFX stem (build/sfx.mjs), cue-locked to assets/beats.js. -->
+      <audio
+        id="sfx"
+        src="assets/sfx.wav"
+        data-start="0"
+        data-duration="15"
+        data-track-index="9"
+        data-volume="1"
+      ></audio>
+    </div>
+
+    <script>
+      (function () {
+        const B = window.BEATS;
+        const SIM = window.MC_SIM;
+        const K = window.HFKit;
+        const SVGNS = "http://www.w3.org/2000/svg";
+        const NAVY = "#1F2E5A";
+        const BURGUNDY = "#7A1F2B";
+        const GOLD = "#C9A24A";
+
+        // ---------------- geometry (px == SVG units; full-frame viewBox) ----------
+        const X0 = 150; // today (the dot)
+        const X1 = 735; // one year out
+        const AXIS = 760; // histogram baseline
+        const MAXLEN = 235; // longest bar → x 995
+        const yOf = (p) => 1400 - (p - 40) * 5.5; // price 40 → y 1400, 200 → y 520
+        const S0 = SIM.params.S0;
+        const yS0 = yOf(S0);
+
+        // ---------------- torn paper edges (seeded, static) ----------------------
+        function tornPolygon(seed, w, h, amp, step) {
+          const r = K.gbm.mulberry32(seed);
+          const top = [];
+          const bot = [];
+          for (let x = 0; x <= w; x += step) top.push([x, amp * (0.2 + r() * 0.8)]);
+          for (let x = w; x >= 0; x -= step) bot.push([x, h - amp * (0.2 + r() * 0.8)]);
+          return "polygon(" + top.concat(bot).map((p) => p[0].toFixed(1) + "px " + p[1].toFixed(1) + "px").join(",") + ")";
+        }
+        // Jagged vertical tear edge riding on --tx (tweened) → the "tear-in" reveal.
+        function tearEdge(seed, h, amp) {
+          const r = K.gbm.mulberry32(seed);
+          const pts = ["-40px -40px", "calc(var(--tx) + 0px) -40px"];
+          for (let y = 0; y <= h; y += 18) pts.push("calc(var(--tx) + " + ((r() - 0.5) * 2 * amp).toFixed(1) + "px) " + y + "px");
+          pts.push("calc(var(--tx) + 0px) " + (h + 40) + "px", "-40px " + (h + 40) + "px");
+          return "polygon(" + pts.join(",") + ")";
+        }
+        document.getElementById("card").style.clipPath = tornPolygon(3, 880, 540, 14, 11);
+        document.getElementById("card-reveal").style.clipPath = tearEdge(5, 540, 16);
+        document.getElementById("strip").style.clipPath = tornPolygon(9, 980, 330, 12, 10);
+        document.getElementById("strip-reveal").style.clipPath = tearEdge(13, 330, 14);
+
+        // ---------------- grid -----------------------------------------------------
+        const grid = document.getElementById("grid");
+        const html = document.getElementById("chart-html");
+        [50, 100, 150, 200].forEach(function (v) {
+          const l = document.createElementNS(SVGNS, "line");
+          l.setAttribute("id", "grid-" + v);
+          l.setAttribute("x1", X0);
+          l.setAttribute("x2", 995);
+          l.setAttribute("y1", yOf(v));
+          l.setAttribute("y2", yOf(v));
+          l.setAttribute("stroke", v === S0 ? NAVY : "#1F2E5A");
+          l.setAttribute("stroke-opacity", v === S0 ? 0.35 : 0.13);
+          l.setAttribute("stroke-width", v === S0 ? 2 : 1.5);
+          l.setAttribute("stroke-dasharray", "6 10");
+          grid.appendChild(l);
+          if (v !== S0) {
+            const t = document.createElement("div");
+            t.className = "grid-label num";
+            t.id = "grid-label-" + v;
+            t.textContent = v;
+            t.style.top = yOf(v) - 14 + "px";
+            html.appendChild(t);
+          }
+        });
+        const axisLine = document.createElementNS(SVGNS, "line");
+        axisLine.setAttribute("id", "hist-axis");
+        axisLine.setAttribute("x1", AXIS);
+        axisLine.setAttribute("x2", AXIS);
+        axisLine.setAttribute("y1", yOf(200) - 10);
+        axisLine.setAttribute("y2", yOf(40) + 10);
+        axisLine.setAttribute("stroke", "#111111");
+        axisLine.setAttribute("stroke-width", 3);
+        axisLine.setAttribute("stroke-linecap", "round");
+        grid.appendChild(axisLine);
+
+        // ---------------- origin dot + label ---------------------------------------
+        ["origin-dot", "origin-halo"].forEach(function (id) {
+          const c = document.getElementById(id);
+          c.setAttribute("cx", X0);
+          c.setAttribute("cy", yS0);
+        });
+        document.getElementById("s0-label").style.top = yS0 - 22 + "px";
+        document.getElementById("s0-label").textContent = SIM.display.S0;
+
+        // ---------------- the fan (200 visible paths of the 1,000 runs) -----------
+        const fan = K.pathFan.create({
+          group: document.getElementById("fan-g"),
+          paths: SIM.paths,
+          x0: X0,
+          x1: X1,
+          yOf: yOf,
+          colors: { line: NAVY },
+          strokeWidth: 1.6,
+          opacity: 0.14,
+          idPrefix: "fan",
+        });
+        const hero = fan.els[0];
+        hero.setAttribute("stroke-width", 4);
+        hero.setAttribute("stroke-opacity", 1);
+
+        // ---------------- histogram (all 1,000 terminal values) --------------------
+        const P5 = K.gbm.percentile(SIM.terminals, 5);
+        const hist = K.histogram.create({
+          group: document.getElementById("hist-g"),
+          bins: SIM.bins,
+          axisX: AXIS,
+          maxLen: MAXLEN,
+          yOf: yOf,
+          gap: 8,
+          color: NAVY,
+          threshold: P5,
+          highlightColor: BURGUNDY,
+          idPrefix: "hist",
+        });
+
+        // Endpoint dots that "drop" into their bins.
+        const dotsG = document.getElementById("drop-dots");
+        const nb = SIM.bins.length;
+        const dots = fan.endpoints.map(function (e, i) {
+          const c = document.createElementNS(SVGNS, "circle");
+          c.setAttribute("id", "drop-" + i);
+          c.setAttribute("cx", e.x);
+          c.setAttribute("cy", Math.max(yOf(200), Math.min(yOf(40), e.y)));
+          c.setAttribute("r", 4.5);
+          c.setAttribute("fill", NAVY);
+          c.setAttribute("opacity", 0);
+          dotsG.appendChild(c);
+          const bin = Math.min(nb - 1, Math.max(0, Math.floor((e.value - SIM.hist.min) / SIM.hist.binWidth)));
+          return { el: c, bin: bin, group: Math.min(3, Math.floor((bin * 4) / nb)), ty: (yOf(SIM.bins[bin].lo) + yOf(SIM.bins[bin].hi)) / 2, y0: +c.getAttribute("cy") };
+        });
+
+        // ---------------- mean ----------------------------------------------------
+        const yMean = yOf(SIM.stats.mean);
+        const meanLine = document.getElementById("mean-line");
+        meanLine.setAttribute("y1", yMean);
+        meanLine.setAttribute("y2", yMean);
+        const meanChip = document.getElementById("mean-chip");
+        document.getElementById("mean-value").textContent = SIM.display.mean;
+        meanChip.style.left = X0 + 10 + "px";
+        meanChip.style.top = yMean - 84 + "px";
+
+        // ---------------- VaR marker ----------------------------------------------
+        const varM = K.varMarker.create({
+          group: document.getElementById("var-g"),
+          layer: html,
+          data: SIM.terminals,
+          percentile: 5,
+          reference: S0,
+          x0: X0,
+          x1: 995,
+          yOf: yOf,
+          zoneBottom: yOf(40) + 10,
+          color: BURGUNDY,
+          label: "VaR 95%",
+          sublabel: "القيمة المعرضة للخطر",
+          labelPos: { x: X0, y: yOf(P5) + 26 },
+          idPrefix: "var",
+        });
+        // The zone sits behind the fan.
+        document.getElementById("var-zone-g").appendChild(varM.zone);
+        const lossPaths = fan.els.filter((_, i) => fan.terminals[i] < P5);
+
+        // ================= TIMELINE ================================================
+        const tl = gsap.timeline({ paused: true });
+
+        // ---- 0.0–2.5 HOOK ----
+        tl.fromTo("#card-wrap", { y: 300, rotation: -8, scale: 0.9, opacity: 0 }, { y: 0, rotation: -2, scale: 1, opacity: 1, duration: 0.55, ease: "back.out(1.6)" }, B.swoosh);
+        tl.fromTo("#card-reveal", { "--tx": "-30px" }, { "--tx": "930px", duration: 0.44, ease: "power2.out" }, B.tear);
+        tl.fromTo("#card-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: "back.out(2)" }, B.arabic - 0.08);
+        tl.fromTo("#card-ar", { opacity: 0, y: 26, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.42, ease: "back.out(1.8)" }, B.arabic);
+        tl.to("#card-wrap", { y: -1350, rotation: -5, duration: 0.45, ease: "power3.in" }, B.cardOut);
+
+        // ---- 2.5–4.0 ONE STARTING POINT ----
+        tl.fromTo("#grid", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 2.55);
+        tl.fromTo(".grid-label", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 2.6);
+        tl.fromTo("#origin-dot", { scale: 0, transformOrigin: "50% 50%" }, { scale: 1, duration: 0.36, ease: "back.out(2.6)" }, B.dot);
+        tl.fromTo("#origin-halo", { scale: 0, opacity: 0.5, transformOrigin: "50% 50%" }, { scale: 1.6, opacity: 0, duration: 0.6, ease: "power2.out" }, B.dot);
+        tl.fromTo("#s0-label", { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.34, ease: "back.out(1.8)" }, B.dot + 0.08);
+        tl.fromTo("#kicker", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }, B.path1 + 0.05);
+        tl.fromTo("#axis-caption", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.6)" }, B.path1 + 0.2);
+        fan.draw(tl, hero, B.path1, 1.0);
+
+        // ---- 4.0–8.0 THE FAN ----
+        tl.to("#kicker", { opacity: 0, y: -20, duration: 0.22, ease: "power2.in" }, B.fan - 0.1);
+        tl.fromTo("#counter", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.36, ease: "back.out(1.7)" }, B.fan);
+        tl.to(hero, { attr: { "stroke-width": 1.6, "stroke-opacity": 0.14 }, duration: 0.5, ease: "power2.out" }, B.fan + 0.25);
+        fan.drawWaves(tl, [
+          { from: 1, to: 10, at: B.fan + 0.1, span: 0.8, dur: 0.75, accel: 1 }, // 1 → 10
+          { from: 10, to: 200, at: B.fan + 1.0, span: 2.0, dur: 0.6, accel: 1.6 }, // 10 → 200, accelerating
+        ]);
+        // Counter 0 → 1,000 on power2.in (value = p²) — SFX ticks use the same curve.
+        const cN = Math.round((B.counterEnd - B.counterStart) * 30);
+        for (let f = 0; f <= cN; f++) {
+          const p = f / cN;
+          const v = Math.round(SIM.params.nRuns * p * p);
+          tl.set("#counter-num", { textContent: v.toLocaleString("en-US") }, B.counterStart + (B.counterEnd - B.counterStart) * p);
+        }
+        tl.fromTo("#counter-num", { scale: 1 }, { scale: 1.08, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1 }, B.counterEnd);
+
+        // ---- 8.0–11.0 THE DISTRIBUTION ----
+        tl.to("#fan-g", { opacity: 0.45, duration: 0.5, ease: "power2.out" }, B.dist);
+        tl.to("#axis-caption", { opacity: 0.55, duration: 0.5 }, B.dist);
+        tl.fromTo("#hist-axis", { scaleY: 0, transformOrigin: "50% 50%" }, { scaleY: 1, duration: 0.4, ease: "back.out(1.6)" }, B.dist);
+        dots.forEach(function (d, i) {
+          const arrive = B.barGroups[d.group] + 0.02;
+          tl.fromTo(d.el, { opacity: 0 }, { opacity: 0.85, duration: 0.15, ease: "power1.out" }, B.dist + (i % 20) * 0.006);
+          tl.to(d.el, { attr: { cx: AXIS + 12, cy: d.ty }, duration: 0.34, ease: "power3.in" }, arrive - 0.34);
+          tl.to(d.el, { opacity: 0, duration: 0.14, ease: "power1.in" }, arrive + 0.02);
+        });
+        hist.grow(tl, { groups: B.barGroups, stagger: 0.035, dur: 0.42, ease: "back.out(1.9)", order: "up" });
+        tl.fromTo(meanLine, { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.42, ease: "power3.out" }, B.mean);
+        tl.fromTo(meanChip, { opacity: 0, scale: 0.6, transformOrigin: "0% 100%" }, { opacity: 1, scale: 1, duration: 0.38, ease: "back.out(2)" }, B.mean + 0.2);
+
+        // ---- 11.0–13.5 THE RISK ----
+        varM.slideIn(tl, B.varSlide, B.varLand - B.varSlide);
+        hist.highlight(tl, B.varLand + 0.12, 0.3);
+        tl.to(lossPaths, { attr: { stroke: BURGUNDY, "stroke-opacity": 0.7 }, duration: 0.3, ease: "power2.out" }, B.varLand + 0.12);
+        varM.revealLabel(tl, B.varLabel);
+
+        // ---- 13.5–15.0 THE TAKEAWAY ----
+        tl.fromTo("#dim", { opacity: 0 }, { opacity: 0.6, duration: 0.4, ease: "power2.out" }, B.takeaway - 0.1);
+        // Labels under the strip bow out rather than sit illegibly beneath it.
+        tl.to([meanChip, varM.labelEl], { opacity: 0, duration: 0.25, ease: "power2.in" }, B.takeaway - 0.1);
+        tl.fromTo("#strip-wrap", { x: -140, rotation: -4, scale: 0.94, opacity: 0 }, { x: 0, rotation: -1.5, scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" }, B.strip);
+        tl.fromTo("#strip-reveal", { "--tx": "-30px" }, { "--tx": "1030px", duration: 0.36, ease: "power2.out" }, B.strip);
+        tl.fromTo("#strip-line-1", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.36, ease: "back.out(1.8)" }, B.strip + 0.16);
+        tl.fromTo("#strip-line-2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.36, ease: "back.out(1.8)" }, B.strip + 0.28);
+        tl.fromTo("#strip-underline", { scaleX: 0, transformOrigin: "100% 50%" }, { scaleX: 1, duration: 0.3, ease: "power3.out" }, B.textDone - 0.3);
+        // 14.2 → 15.0: hold.
+
+        window.__timelines["montecarlo"] = tl;
+      })();
+    </script>
+  </body>
+</html>

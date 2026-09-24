@@ -16,7 +16,9 @@
     "registry/blocks/{glass-shard-title,code-slice-hero,cuboid-carousel,frost-sequence-camera-orbit,orbit-card}/**/*.{js,mjs}",
     "registry/blocks/frost-sequence-camera-orbit/source/**",
     "chrome/",
-    "packages/cli/src/media-use/lib/svg-sanitize.mjs"
+    "packages/cli/src/media-use/lib/svg-sanitize.mjs",
+    "bizmafhoom/**/vendor/**",
+    "bizmafhoom/**/assets/sim-data.js"
   ],
   "overrides": [
     {
