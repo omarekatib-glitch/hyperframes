@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Business Mafhoom — Brand Intro</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Cairo";
+        src: url("assets/fonts/cairo-arabic-900-normal.woff2") format("woff2");
+        font-weight: 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2");
+        font-weight: 600;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+      :root {
+        --navy: #1f2e5a;
+        --burgundy: #7a1f2b;
+        --gold: #c9a24a;
+        --gold-deep: #a47f2c;
+        --paper: #f8f5ee;
+        --ink: #1a100e;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      .layer {
+        position: absolute;
+        inset: 0;
+      }
+      #bg-grid {
+        background-image: radial-gradient(rgba(31, 46, 90, 0.13) 2.2px, transparent 2.6px);
+        background-size: 54px 54px;
+        background-position: 27px 27px;
+      }
+      #bg-vignette {
+        background: radial-gradient(
+          120% 80% at 50% 45%,
+          rgba(248, 245, 238, 0) 55%,
+          rgba(201, 162, 74, 0.14) 100%
+        );
+      }
+      #halo {
+        position: absolute;
+        left: 190px;
+        top: 250px;
+        width: 700px;
+        height: 700px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(201, 162, 74, 0.3) 0%,
+          rgba(201, 162, 74, 0.12) 45%,
+          rgba(201, 162, 74, 0) 70%
+        );
+        opacity: 0;
+      }
+      #chart {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 1920px;
+      }
+
+      /* ---------- orbiting items ---------- */
+      .orb {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 150px;
+        height: 150px;
+      }
+      .orb .drop {
+        width: 150px;
+        height: 150px;
+      }
+      .orb svg {
+        display: block;
+        width: 150px;
+        height: 150px;
+        overflow: visible;
+      }
+      .orb.coin,
+      .orb.coin .drop,
+      .orb.coin svg {
+        width: 104px;
+        height: 104px;
+      }
+      #items {
+        z-index: 3;
+      }
+
+      /* ---------- character rig (image-space px, 610 x 1780 crop) ---------- */
+      #rig {
+        position: absolute;
+        left: 238px;
+        top: -144px;
+        width: 610px;
+        height: 1780px;
+        z-index: 4;
+      }
+      #rig .part {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 610px;
+        height: 1780px;
+      }
+      #rig .part img {
+        display: block;
+        width: 610px;
+        height: 1780px;
+      }
+      #shadow {
+        position: absolute;
+        left: 60px;
+        top: 1712px;
+        width: 520px;
+        height: 104px;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(26, 16, 14, 0.26), rgba(26, 16, 14, 0));
+      }
+      .seg {
+        position: absolute;
+        left: 0;
+        top: 0;
+        overflow: visible;
+      }
+      #seg-upper {
+        width: 76px;
+        height: 291px;
+      }
+      #seg-fore {
+        width: 70px;
+        height: 250px;
+      }
+      #seg-hand {
+        width: 84px;
+        height: 142px;
+      }
+      #svg-arm {
+        opacity: 0;
+      }
+
+      /* ---------- burst coins ---------- */
+      .bcoin {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 84px;
+        height: 84px;
+        opacity: 0;
+      }
+      .bcoin svg {
+        display: block;
+        width: 84px;
+        height: 84px;
+      }
+      #burst {
+        z-index: 5;
+      }
+      #peak-ring {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 8px solid var(--gold);
+        opacity: 0;
+      }
+
+      /* ---------- logo ---------- */
+      #logo-block {
+        position: absolute;
+        left: 0;
+        top: 1236px;
+        width: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 6;
+      }
+      #logo-wrap {
+        position: relative;
+        padding: 0 36px;
+      }
+      #logo {
+        direction: rtl;
+        font-family: "Cairo", sans-serif;
+        font-weight: 900;
+        font-size: 128px;
+        line-height: 1.25;
+        color: var(--navy);
+        white-space: nowrap;
+        clip-path: inset(-20% -5% -20% 105%);
+      }
+      #logo .w2 {
+        color: var(--burgundy);
+      }
+      .track {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      #shine-track {
+        overflow: hidden;
+      }
+      #nib {
+        position: absolute;
+        top: 34px;
+        left: 0;
+        width: 10px;
+        height: 140px;
+        border-radius: 5px;
+        background: var(--gold);
+        opacity: 0;
+      }
+      #underline {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        bottom: -16px;
+        height: 12px;
+        border-radius: 6px;
+        background: var(--gold);
+        transform-origin: 100% 50%;
+      }
+      #shine {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 120px;
+        height: 100%;
+        background: linear-gradient(
+          100deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 244, 214, 0.75) 50%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        mix-blend-mode: screen;
+        opacity: 0;
+      }
+      #subline {
+        margin-top: 40px;
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        font-size: 50px;
+        letter-spacing: 0.01em;
+        color: var(--navy);
+      }
+      #subline .accent {
+        color: var(--gold-deep);
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="10"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- shared symbol defs -->
+      <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+        <defs>
+          <g id="coin-sym">
+            <circle cx="52" cy="52" r="46" fill="#C9A24A" stroke="#1A100E" stroke-width="6" />
+            <circle cx="52" cy="52" r="33" fill="none" stroke="#A47F2C" stroke-width="5" />
+            <path
+              d="M52 30 L57 46 L74 47 L60 57 L65 74 L52 64 L39 74 L44 57 L30 47 L47 46 Z"
+              fill="#E3C57A"
+              stroke="#A47F2C"
+              stroke-width="3"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M22 38 A33 33 0 0 1 40 20"
+              fill="none"
+              stroke="#F4E3B2"
+              stroke-width="6"
+              stroke-linecap="round"
+            />
+          </g>
+          <g id="tile">
+            <rect x="15" y="17" width="126" height="126" rx="30" fill="#1F2E5A" opacity="0.22" />
+            <rect
+              x="8"
+              y="8"
+              width="126"
+              height="126"
+              rx="30"
+              fill="#FFFDF8"
+              stroke="#1A100E"
+              stroke-width="6"
+            />
+          </g>
+        </defs>
+      </svg>
+
+      <div id="bg-grid" class="layer"></div>
+      <div id="bg-vignette" class="layer"></div>
+      <div id="halo"></div>
+
+      <!-- rising line chart (drawn behind the character) -->
+      <svg id="chart" viewBox="0 0 1080 1920" aria-hidden="true">
+        <defs>
+          <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#C9A24A" stop-opacity="0.38" />
+            <stop offset="1" stop-color="#C9A24A" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <g id="chart-grid" stroke="#1F2E5A" stroke-opacity="0.16" stroke-width="3">
+          <line class="gl" x1="90" y1="1340" x2="1000" y2="1340" stroke-opacity="0.5" stroke-width="5" />
+          <line class="gl" x1="90" y1="1090" x2="1000" y2="1090" stroke-dasharray="14 14" />
+          <line class="gl" x1="90" y1="840" x2="1000" y2="840" stroke-dasharray="14 14" />
+          <line class="gl" x1="90" y1="590" x2="1000" y2="590" stroke-dasharray="14 14" />
+        </g>
+        <path
+          id="chart-area"
+          d="M110 1330 L250 1170 L370 1230 L500 990 L620 1050 L760 760 L860 820 L975 430 L975 1340 L110 1340 Z"
+          fill="url(#area-grad)"
+          opacity="0"
+        />
+        <path
+          id="chart-line-shadow"
+          pathLength="1"
+          d="M110 1330 L250 1170 L370 1230 L500 990 L620 1050 L760 760 L860 820 L975 430"
+          fill="none"
+          stroke="#1A100E"
+          stroke-opacity="0.14"
+          stroke-width="30"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          transform="translate(6 10)"
+        />
+        <path
+          id="chart-line"
+          pathLength="1"
+          d="M110 1330 L250 1170 L370 1230 L500 990 L620 1050 L760 760 L860 820 L975 430"
+          fill="none"
+          stroke="#7A1F2B"
+          stroke-width="22"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <g id="peak-dot" transform="translate(975 430)">
+          <circle r="26" fill="#C9A24A" stroke="#1A100E" stroke-width="6" />
+        </g>
+      </svg>
+
+      <!-- drop-in / orbiting icons + coins -->
+      <div id="items" class="layer">
+        <div class="orb icon" id="o0">
+          <div class="drop">
+            <svg viewBox="0 0 150 150">
+              <use href="#tile" />
+              <path
+                d="M30 106 L58 76 L78 92 L112 50"
+                fill="none"
+                stroke="#7A1F2B"
+                stroke-width="12"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M92 44 L118 42 L116 68 Z" fill="#7A1F2B" stroke="#7A1F2B" stroke-width="6" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+        <div class="orb coin" id="o1"><div class="drop"><svg viewBox="0 0 104 104"><use href="#coin-sym" /></svg></div></div>
+        <div class="orb icon" id="o2">
+          <div class="drop">
+            <svg viewBox="0 0 150 150">
+              <use href="#tile" />
+              <circle cx="71" cy="71" r="38" fill="#1F2E5A" stroke="#1A100E" stroke-width="5" />
+              <path d="M71 71 L71 33 A38 38 0 0 1 107 83 Z" fill="#C9A24A" stroke="#1A100E" stroke-width="5" stroke-linejoin="round" />
+              <path d="M71 71 L107 83 A38 38 0 0 1 84 107 Z" fill="#7A1F2B" stroke="#1A100E" stroke-width="5" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+        <div class="orb coin" id="o3"><div class="drop"><svg viewBox="0 0 104 104"><use href="#coin-sym" /></svg></div></div>
+        <div class="orb icon" id="o4">
+          <div class="drop">
+            <svg viewBox="0 0 150 150">
+              <use href="#tile" />
+              <rect x="40" y="26" width="62" height="92" rx="10" fill="#1F2E5A" stroke="#1A100E" stroke-width="5" />
+              <rect x="49" y="35" width="44" height="20" rx="4" fill="#C9A24A" />
+              <g fill="#FFFDF8">
+                <rect x="49" y="64" width="11" height="10" rx="2" />
+                <rect x="65" y="64" width="11" height="10" rx="2" />
+                <rect x="81" y="64" width="11" height="10" rx="2" fill="#C9A24A" />
+                <rect x="49" y="80" width="11" height="10" rx="2" />
+                <rect x="65" y="80" width="11" height="10" rx="2" />
+                <rect x="81" y="80" width="11" height="26" rx="2" fill="#7A1F2B" />
+                <rect x="49" y="96" width="27" height="10" rx="2" />
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="orb coin" id="o5"><div class="drop"><svg viewBox="0 0 104 104"><use href="#coin-sym" /></svg></div></div>
+        <div class="orb icon" id="o6">
+          <div class="drop">
+            <svg viewBox="0 0 150 150">
+              <use href="#tile" />
+              <line x1="44" y1="104" x2="98" y2="38" stroke="#7A1F2B" stroke-width="13" stroke-linecap="round" />
+              <circle cx="48" cy="48" r="13" fill="none" stroke="#7A1F2B" stroke-width="11" />
+              <circle cx="94" cy="94" r="13" fill="none" stroke="#7A1F2B" stroke-width="11" />
+            </svg>
+          </div>
+        </div>
+        <div class="orb coin" id="o7"><div class="drop"><svg viewBox="0 0 104 104"><use href="#coin-sym" /></svg></div></div>
+        <div class="orb coin" id="o8"><div class="drop"><svg viewBox="0 0 104 104"><use href="#coin-sym" /></svg></div></div>
+      </div>
+
+      <!-- character cut-out rig -->
+      <div id="rig">
+        <div id="shadow"></div>
+        <div class="part" id="arm-raster"><img src="assets/char/arm.png" alt="" /></div>
+        <div class="part" id="head"><img src="assets/char/head.png" alt="" /></div>
+        <div class="part" id="body"><img src="assets/char/body.png" alt="" /></div>
+        <div class="part" id="svg-arm">
+          <svg class="seg" id="seg-upper" viewBox="0 0 76 291">
+            <path d="M3 38 L3 253 A35 35 0 0 0 73 253 L73 38 A35 35 0 0 0 3 38 Z" fill="#2A3C5D" />
+            <path d="M3 38 L3 253 A35 35 0 0 0 73 253 L73 38" fill="none" stroke="#1A100E" stroke-width="6" stroke-linejoin="round" />
+            <path d="M22 120 Q30 150 24 190" fill="none" stroke="#1A100E" stroke-width="4" stroke-linecap="round" opacity="0.8" />
+          </svg>
+          <svg class="seg" id="seg-fore" viewBox="0 0 70 250">
+            <path d="M3 35 L3 220 L67 220 L67 35 A32 32 0 0 0 3 35 Z" fill="#2A3C5D" />
+            <path d="M3 35 L3 222 M67 222 L67 35" fill="none" stroke="#1A100E" stroke-width="6" />
+            <path d="M3 35 A32 32 0 0 1 67 35" fill="none" stroke="#1A100E" stroke-width="6" />
+            <rect x="4" y="214" width="62" height="26" rx="5" fill="#F6F6F3" stroke="#1A100E" stroke-width="5" />
+          </svg>
+          <svg class="seg" id="seg-hand" viewBox="0 0 84 142">
+            <rect x="15" y="52" width="24" height="86" rx="12" fill="#DB9F78" stroke="#1A100E" stroke-width="5" />
+            <rect x="11" y="4" width="62" height="72" rx="24" fill="#DB9F78" stroke="#1A100E" stroke-width="5" />
+            <path d="M40 74 Q47 84 54 74 Q61 84 68 72" fill="none" stroke="#1A100E" stroke-width="4.5" stroke-linecap="round" />
+            <path d="M44 60 Q54 64 66 58" fill="none" stroke="#1A100E" stroke-width="3.5" stroke-linecap="round" opacity="0.7" />
+            <path d="M62 20 Q84 26 80 50 Q77 62 62 58" fill="#DB9F78" stroke="#1A100E" stroke-width="5" stroke-linejoin="round" />
+            <path d="M20 118 Q27 122 34 118" fill="none" stroke="#1A100E" stroke-width="3" stroke-linecap="round" opacity="0.6" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- coin burst at the chart peak -->
+      <div id="burst" class="layer">
+        <div id="peak-ring"></div>
+      </div>
+
+      <!-- logo lock-up -->
+      <div id="logo-block">
+        <div id="logo-wrap">
+          <div id="logo"><span class="w1">بيزنس</span> <span class="w2">مفهوم</span></div>
+          <div class="track" id="nib-track"><div id="nib"></div></div>
+          <div id="underline"></div>
+          <div class="track" id="shine-track"><div id="shine"></div></div>
+        </div>
+        <div id="subline">Business<span class="accent">,</span> Understood<span class="accent">.</span></div>
+      </div>
+
+      <audio id="bgm" src="assets/audio/music.m4a" data-start="0" data-duration="10" data-volume="0.9"></audio>
+      <audio id="sfx" src="assets/audio/sfx.m4a" data-start="0" data-duration="10" data-volume="1"></audio>
+    </div>
+
+    <script>
+      // ---------- constants ----------
+      const RIG = { feetX: 302, feetY: 1764 }; // feet anchor inside the 610x1780 crop
+      const MID_SCALE = 0.62;
+      const END_SCALE = 0.5;
+      const END_DY = -430; // feet 1620 -> 1190
+
+      // orbit ellipse (frame px) — item centres
+      const OC = { x: 540, y: 1080, rx: 410, ry: 640 };
+      const ORBS = [...document.querySelectorAll(".orb")];
+      const orbSize = (el) => (el.classList.contains("coin") ? 104 : 150);
+      const baseAng = ORBS.map((_, i) => -90 + i * (360 / ORBS.length));
+      function orbitPos(i, off) {
+        const a = ((baseAng[i] + off) * Math.PI) / 180;
+        const s = orbSize(ORBS[i]) / 2;
+        return { x: OC.x + OC.rx * Math.cos(a) - s, y: OC.y + OC.ry * Math.sin(a) - s };
+      }
+
+      // ---------- svg arm forward kinematics (rig px) ----------
+      const S = { x: 85, y: 650 }; // shoulder joint
+      const L1 = 215;
+      const L2 = 207; // forearm + cuff to wrist
+      const segU = document.getElementById("seg-upper");
+      const segF = document.getElementById("seg-fore");
+      const segH = document.getElementById("seg-hand");
+      gsap.set(segU, { transformOrigin: "38px 38px" });
+      gsap.set(segF, { transformOrigin: "35px 35px" });
+      gsap.set(segH, { transformOrigin: "42px 6px" });
+      const rad = (d) => (d * Math.PI) / 180;
+      const pose = { u: 6.8, k: 1, f: 10.5, h: 8 };
+      function applyPose() {
+        const E = { x: S.x - L1 * pose.k * Math.sin(rad(pose.u)), y: S.y + L1 * pose.k * Math.cos(rad(pose.u)) };
+        const W = { x: E.x - L2 * Math.sin(rad(pose.f)), y: E.y + L2 * Math.cos(rad(pose.f)) };
+        gsap.set(segU, { x: S.x - 38, y: S.y - 38, rotation: pose.u, scaleY: pose.k });
+        gsap.set(segF, { x: E.x - 35, y: E.y - 35, rotation: pose.f });
+        gsap.set(segH, { x: W.x - 42, y: W.y - 6, rotation: pose.h });
+      }
+      applyPose();
+      const POSES = {
+        rest: { u: 6.8, k: 1, f: 10.5, h: 8 },
+        glasses: { u: -83.3, k: 0.4, f: -169.4, h: -169.4 },
+        push: { u: -83.3, k: 0.4, f: -170.5, h: -171 },
+        low: { u: 72, k: 1, f: 80, h: 84 },
+        mid: { u: 112, k: 1, f: 118, h: 120 },
+        up: { u: 160, k: 1, f: 172, h: 176 },
+      };
+
+      // ---------- timeline ----------
+      const tl = gsap.timeline({ paused: true });
+
+      // initial states
+      gsap.set("#rig", { transformOrigin: `${RIG.feetX}px ${RIG.feetY}px`, scale: 0, y: 160 });
+      gsap.set("#head", { transformOrigin: "280px 550px" });
+      gsap.set("#arm-raster", { transformOrigin: "82px 640px" });
+      gsap.set("#body", { transformOrigin: `${RIG.feetX}px ${RIG.feetY}px` });
+      ORBS.forEach((el, i) => gsap.set(el, orbitPos(i, 0)));
+      gsap.set(".orb .drop", { transformOrigin: "50% 100%" });
+      gsap.set("#chart-grid .gl", { strokeDasharray: "14 14" });
+      const line = document.getElementById("chart-line");
+      const lineShadow = document.getElementById("chart-line-shadow");
+      const LEN = 1;
+      gsap.set([line, lineShadow], { strokeDasharray: LEN, strokeDashoffset: LEN });
+      gsap.set("#peak-dot", { scale: 0, transformOrigin: "0px 0px" });
+      gsap.set("#subline", { opacity: 0, y: 26 });
+      gsap.set("#underline", { scaleX: 0 });
+
+      // stable baselines for every multi-tween target
+      tl.set("#head", { y: 0, rotation: 0, scaleY: 1 }, 0);
+      tl.set("#logo", { clipPath: "inset(-20% -5% -20% 105%)", y: 30 }, 0);
+      tl.set(pose, { ...POSES.rest, onUpdate: applyPose }, 0);
+
+      // 0.00 – 0.40  paper settles in
+      tl.fromTo("#bg-grid", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 0);
+
+      // 0.27 – 1.95  icons + coins drop and bounce into place (landings 0.52 → 1.48s)
+      ORBS.forEach((el, i) => {
+        const drop = el.querySelector(".drop");
+        const t0 = 0.27 + i * 0.12;
+        tl.fromTo(drop, { y: -1500, rotation: i % 2 ? 14 : -14 }, { y: 0, rotation: 0, duration: 0.7, ease: "bounce.out" }, t0);
+        tl.fromTo(
+          drop,
+          { scaleX: 1, scaleY: 1 },
+          { scaleX: 1.16, scaleY: 0.82, duration: 0.06, ease: "power2.out", yoyo: true, repeat: 1 },
+          t0 + 0.25,
+        );
+      });
+
+      // 1.95 – 2.45  character pops in from the floor
+      tl.fromTo("#rig", { scale: 0, y: 160 }, { scale: MID_SCALE, y: 0, duration: 0.5, immediateRender: false, ease: "back.out(1.9)" }, 1.95);
+      tl.fromTo("#rig", { rotation: -6 }, { rotation: 0, duration: 0.55, immediateRender: false, ease: "back.out(2.4)" }, 1.95);
+
+      // 2.30 – 4.35  items orbit him (one snappy revolution)
+      const orbit = { a: 0 };
+      tl.to(
+        orbit,
+        {
+          a: 360,
+          duration: 2.05,
+          ease: "power3.inOut",
+          onUpdate: () => ORBS.forEach((el, i) => gsap.set(el, orbitPos(i, orbit.a))),
+        },
+        2.3,
+      );
+
+      // 2.55 – 3.40  adjusts his glasses (swap raster arm -> drawn arm)
+      tl.set("#arm-raster", { opacity: 0 }, 2.55);
+      tl.set("#svg-arm", { opacity: 1 }, 2.55);
+      tl.fromTo(pose, { ...POSES.rest }, { ...POSES.glasses, duration: 0.32, immediateRender: false, ease: "power3.out", onUpdate: applyPose }, 2.55);
+      tl.fromTo(pose, { ...POSES.glasses }, { ...POSES.push, duration: 0.1, immediateRender: false, ease: "power2.out", onUpdate: applyPose }, 2.9);
+      tl.fromTo("#head", { y: 0, rotation: 0 }, { y: -6, rotation: -1.5, duration: 0.1, immediateRender: false, ease: "power2.out" }, 2.9);
+      tl.fromTo(pose, { ...POSES.push }, { ...POSES.rest, duration: 0.34, immediateRender: false, ease: "power3.inOut", onUpdate: applyPose }, 3.06);
+      tl.set("#svg-arm", { opacity: 0 }, 3.4);
+      tl.set("#arm-raster", { opacity: 1 }, 3.4);
+
+      // 3.45 – 3.95  small confident nod
+      tl.fromTo("#head", { y: -6, rotation: -1.5, scaleY: 1 }, { y: 14, rotation: 2.5, scaleY: 0.975, duration: 0.16, immediateRender: false, ease: "power2.out" }, 3.45);
+      tl.fromTo("#head", { y: 14, rotation: 2.5, scaleY: 0.975 }, { y: 0, rotation: 0, scaleY: 1, duration: 0.32, immediateRender: false, ease: "back.out(2.2)" }, 3.62);
+
+      // 4.20 – 4.50  icons clear the stage; coins stack at the chart origin
+      const coinStack = [1, 3, 5, 7, 8];
+      const icons = [0, 2, 4, 6];
+      icons.forEach((idx, k) => {
+        tl.fromTo(ORBS[idx].querySelector(".drop"), { scale: 1 }, { scale: 0, duration: 0.2, ease: "back.in(2)" }, 4.2 + k * 0.04);
+      });
+      coinStack.forEach((idx, k) => {
+        const p0 = orbitPos(idx, 360);
+        tl.fromTo(ORBS[idx], p0, { x: 78, y: 1386 - k * 24, duration: 0.3, ease: "power3.inOut" }, 4.2 + k * 0.04);
+        tl.fromTo(ORBS[idx].querySelector(".drop"), { scaleY: 1 }, { scaleY: 0.34, duration: 0.3, ease: "power3.inOut" }, 4.2 + k * 0.04);
+      });
+
+      // 4.45 – 6.45  chart draws itself behind him; he points along the climb
+      tl.fromTo("#chart-grid .gl", { opacity: 0, scaleX: 0, transformOrigin: "90px 0px" }, { opacity: 1, scaleX: 1, duration: 0.35, stagger: 0.05, ease: "power3.out" }, 4.4);
+      tl.fromTo([line, lineShadow], { strokeDashoffset: LEN }, { strokeDashoffset: 0, duration: 1.9, ease: "power1.in" }, 4.55);
+      tl.fromTo("#chart-area", { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.in" }, 5.1);
+      tl.set("#arm-raster", { opacity: 0 }, 4.5);
+      tl.set("#svg-arm", { opacity: 1 }, 4.5);
+      tl.fromTo(pose, { ...POSES.rest }, { ...POSES.low, duration: 0.3, immediateRender: false, ease: "back.out(1.6)", onUpdate: applyPose }, 4.5);
+      tl.fromTo(pose, { ...POSES.low }, { ...POSES.mid, duration: 0.9, immediateRender: false, ease: "power2.inOut", onUpdate: applyPose }, 4.95);
+      tl.fromTo(pose, { ...POSES.mid }, { ...POSES.up, duration: 0.5, immediateRender: false, ease: "power3.out", onUpdate: applyPose }, 5.95);
+
+      // 6.45  peak: dot pops, ring, coins burst upward
+      tl.fromTo("#peak-dot", { scale: 0 }, { scale: 1, duration: 0.3, immediateRender: false, ease: "back.out(3)" }, 6.42);
+      tl.fromTo("#peak-ring", { x: 945, y: 400, scale: 0.4, opacity: 1 }, { scale: 4.2, opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, 6.45);
+      tl.fromTo("#rig", { scaleY: MID_SCALE }, { scaleY: MID_SCALE * 1.03, duration: 0.08, immediateRender: false, ease: "power2.out", yoyo: true, repeat: 1 }, 6.45);
+      const burstLayer = document.getElementById("burst");
+      const BURST = [
+        [-330, -300, 0.0], [-210, -390, 0.02], [-90, -340, 0.04], [30, -420, 0.01],
+        [120, -300, 0.03], [-260, -170, 0.05], [-40, -250, 0.06], [80, -200, 0.02],
+        [-150, -120, 0.07], [60, -120, 0.08],
+      ];
+      BURST.forEach(([dx, dy, d], i) => {
+        const el = document.createElement("div");
+        el.className = "bcoin";
+        el.innerHTML = '<svg viewBox="0 0 104 104"><use href="#coin-sym" /></svg>';
+        burstLayer.appendChild(el);
+        const t0 = 6.45 + d;
+        tl.set(el, { x: 933, y: 388, opacity: 1, scale: 0.6 }, t0);
+        tl.to(el, { x: 933 + dx, duration: 0.75, ease: "power1.out" }, t0);
+        tl.to(el, { y: 388 + dy, scale: 1, duration: 0.38, ease: "power2.out" }, t0);
+        tl.to(el, { y: 388 + dy + 520, duration: 0.45, ease: "power2.in" }, t0 + 0.38);
+        tl.fromTo(el, { scaleX: 1 }, { scaleX: -1, duration: 0.12, ease: "sine.inOut", yoyo: true, repeat: 5 }, t0 + 0.05);
+        tl.to(el, { opacity: 0, duration: 0.12 }, t0 + 0.72);
+      });
+
+      // 7.00 – 7.50  everything snaps into the lock-up
+      tl.to(["#chart", "#peak-ring"], { opacity: 0, y: -40, duration: 0.25, ease: "power2.in" }, 7.0);
+      tl.fromTo(pose, { ...POSES.up }, { ...POSES.rest, duration: 0.3, immediateRender: false, ease: "power3.inOut", onUpdate: applyPose }, 7.0);
+      tl.set("#svg-arm", { opacity: 0 }, 7.3);
+      tl.set("#arm-raster", { opacity: 1 }, 7.3);
+      tl.fromTo("#rig", { y: 0, scale: MID_SCALE }, { y: END_DY, scale: END_SCALE, duration: 0.45, immediateRender: false, ease: "power4.inOut" }, 7.0);
+      tl.fromTo("#halo", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, immediateRender: false, ease: "power3.out" }, 7.2);
+
+      // final tidy slots: icons flank him, coins form a divider row
+      const ICON_SLOTS = [
+        [110, 330], [820, 330], [95, 640], [835, 640],
+      ];
+      icons.forEach((idx, k) => {
+        const [x, y] = ICON_SLOTS[k];
+        tl.set(ORBS[idx], { x, y }, 7.15);
+        tl.fromTo(
+          ORBS[idx].querySelector(".drop"),
+          { scale: 0, rotation: k % 2 ? 20 : -20 },
+          { scale: 0.86, rotation: 0, duration: 0.4, ease: "back.out(2.2)" },
+          7.15 + k * 0.05,
+        );
+      });
+      coinStack.forEach((idx, k) => {
+        tl.fromTo(
+          ORBS[idx],
+          { x: 78, y: 1386 - k * 24 },
+          { x: 540 - 52 + (k - 2) * 92, y: 1575, duration: 0.42, ease: "back.out(1.7)" },
+          7.2 + k * 0.04,
+        );
+        tl.fromTo(ORBS[idx].querySelector(".drop"), { scaleX: 1, scaleY: 0.34 }, { scaleY: 0.62, scaleX: 0.62, duration: 0.42, ease: "back.out(1.7)" }, 7.2 + k * 0.04);
+      });
+
+      // 7.05 – 7.70  logo writes on right-to-left, gold nib leads
+      tl.fromTo("#logo", { clipPath: "inset(-20% -5% -20% 105%)" }, { clipPath: "inset(-20% -5% -20% -5%)", duration: 0.6, immediateRender: false, ease: "power3.inOut" }, 7.05);
+      tl.fromTo("#logo", { y: 30 }, { y: 0, duration: 0.6, immediateRender: false, ease: "power3.out" }, 7.05);
+      tl.set("#nib", { opacity: 1 }, 7.05);
+      tl.fromTo("#nib-track", { xPercent: 96 }, { xPercent: 2, duration: 0.6, ease: "power3.inOut", immediateRender: false }, 7.05);
+      tl.to("#nib", { opacity: 0, scaleY: 0, duration: 0.14, ease: "power2.in" }, 7.66);
+      tl.fromTo("#underline", { scaleX: 0 }, { scaleX: 1, duration: 0.45, immediateRender: false, ease: "power3.out" }, 7.45);
+
+      // 7.90 – 8.30  English subline
+      tl.fromTo("#subline", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.38, immediateRender: false, ease: "back.out(2)" }, 7.9);
+
+      // 8.40 – 8.95  gold shine sweep, then hold
+      tl.set("#shine", { opacity: 1 }, 8.4);
+      tl.fromTo("#shine-track", { xPercent: 100 }, { xPercent: -15, duration: 0.55, ease: "power2.inOut", immediateRender: false }, 8.4);
+      tl.set("#shine", { opacity: 0 }, 8.96);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
