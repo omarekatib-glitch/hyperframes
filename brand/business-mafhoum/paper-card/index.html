@@ -1,0 +1,451 @@
+<!doctype html>
+<html
+  lang="ar"
+  data-composition-variables='[
+    {"id":"title_text","type":"string","label":"Title","default":"ليه الـ Inflation بياكل فلوسك؟","maxLength":60},
+    {"id":"body_line_1","type":"string","label":"Body line 1","default":"كل سنة الأسعار بتزيد بنسبة معينة","maxLength":40},
+    {"id":"body_line_2","type":"string","label":"Body line 2","default":"فلوسك في البنك بتشتري حاجات أقل","maxLength":40},
+    {"id":"body_line_3","type":"string","label":"Body line 3 (optional)","default":"الحل إنك تستثمر أسرع من التضخم","maxLength":40},
+    {"id":"highlight_phrase","type":"string","label":"Highlight phrase (must appear in a body line)","default":"بتشتري حاجات أقل","maxLength":30},
+    {"id":"enter_variant","type":"enum","label":"Enter variant","default":"SLIDE","options":[{"value":"SLIDE","label":"Slide from right"},{"value":"DROP","label":"Drop from above"},{"value":"PUSH_IN","label":"Push in"}]},
+    {"id":"hold_duration","type":"number","label":"Hold until (OUT starts at, s)","default":5,"min":2,"max":10,"step":0.1,"unit":"s"},
+    {"id":"background_mode","type":"enum","label":"Background","default":"transparent","options":[{"value":"transparent","label":"Transparent (alpha)"},{"value":"green","label":"Green #00FF00, no shadow"},{"value":"green_hard_shadow","label":"Green #00FF00, hard shadow"}]}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>PAPER_CARD — بيزنس مفهوم</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="paper-card-timing.js"></script>
+    <style>
+      @font-face {
+        font-family: "Cairo";
+        src: url("assets/fonts/Cairo-Variable.woff2") format("woff2");
+        font-weight: 200 1000;
+        font-display: block;
+      }
+      /* Latin letters + digits only, so Arabic (and Arabic punctuation) always
+         falls through to Cairo while English words set in Montserrat. */
+      @font-face {
+        font-family: "Montserrat";
+        src: url("assets/fonts/Montserrat-Variable.woff2") format("woff2");
+        font-weight: 100 900;
+        font-display: block;
+        unicode-range: U+0030-0039, U+0041-005A, U+0061-007A, U+00C0-024F;
+      }
+
+      :root {
+        /* Brand tokens — BRAND-CORE / EDITING-STYLE §1 */
+        --pc-cream: #f5f0e8;
+        --pc-charcoal: #2c2c2c;
+        --pc-blue: #1d6fa4;
+        --pc-green: #00ff00;
+        /* Crumpled-then-flattened sheets never have ruler-straight edges. */
+        --pc-edge: polygon(
+          2px 3px,
+          22% 0px,
+          41% 2px,
+          63% 0px,
+          82% 3px,
+          calc(100% - 1px) 1px,
+          100% 24%,
+          calc(100% - 2px) 48%,
+          100% 71%,
+          calc(100% - 3px) calc(100% - 2px),
+          78% 100%,
+          57% calc(100% - 3px),
+          36% 100%,
+          15% calc(100% - 2px),
+          1px calc(100% - 1px),
+          2px 76%,
+          0px 52%,
+          3px 27%
+        );
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: transparent;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Green-screen fallback fill (background_mode = green*). */
+      #pc-bg {
+        position: absolute;
+        inset: 0;
+        background: var(--pc-green);
+        display: none;
+      }
+      #root.pc-green #pc-bg {
+        display: block;
+      }
+
+      /* Zero-height row whose centre line sits at 30% of frame height:
+         flex centring puts the card's vertical centre exactly on it. */
+      .pc-anchor {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 30%;
+        height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .pc-card {
+        position: relative;
+        width: 900px;
+        flex: none;
+      }
+
+      /* Surface shadow: its own layer so DROP can loosen/tighten it.
+         box-shadow "30px blur" == Gaussian sigma 15px. */
+      .pc-shadow {
+        position: absolute;
+        inset: 0;
+        opacity: 0.35;
+        filter: blur(15px);
+      }
+      .pc-shadow-shape {
+        position: absolute;
+        inset: 0;
+        background: #000;
+        clip-path: var(--pc-edge);
+      }
+      #root.pc-green .pc-shadow {
+        display: none;
+      }
+      #root.pc-green-hard .pc-shadow {
+        display: block;
+        opacity: 1;
+        filter: none;
+      }
+      #root.pc-green-hard .pc-shadow-shape {
+        background: #1a1a1a;
+      }
+
+      .pc-paper {
+        position: relative;
+        width: 900px;
+        min-height: 500px;
+        max-height: 1000px;
+        overflow: hidden;
+        padding: 60px;
+        background-color: var(--pc-cream);
+        background-image: url("assets/paper-texture.jpg");
+        background-size: 900px 1000px;
+        background-position: center top;
+        clip-path: var(--pc-edge);
+        box-shadow: inset 0 0 40px rgba(70, 58, 44, 0.06);
+        direction: rtl;
+        text-align: right;
+        color: var(--pc-charcoal);
+      }
+
+      .pc-title {
+        font-family: "Montserrat", "Cairo", sans-serif;
+        font-weight: 700;
+        font-size: 72px;
+        line-height: 1.3;
+        color: var(--pc-charcoal);
+      }
+      .pc-bar-row {
+        display: flex;
+        justify-content: flex-start; /* RTL: start = right */
+        margin-top: 18px;
+      }
+      .pc-bar {
+        display: block;
+        width: 80px;
+        height: 8px;
+        background: var(--pc-blue);
+        transform-origin: 100% 50%; /* draws right -> left */
+      }
+
+      .pc-body {
+        margin-top: 36px;
+      }
+      .pc-line {
+        display: block;
+        font-family: "Cairo", sans-serif;
+        font-weight: 400;
+        font-size: 46px;
+        line-height: 1.5;
+        white-space: nowrap;
+        color: var(--pc-charcoal);
+      }
+
+      /* Highlight: cream-on-blue copy of the phrase wiped over the ink. */
+      .pc-hl {
+        position: relative;
+        display: inline-block;
+      }
+      .pc-hl-fill {
+        position: absolute;
+        inset: 0 -12px;
+        padding: 0 12px;
+        background: var(--pc-blue);
+        color: var(--pc-cream);
+        white-space: nowrap;
+        clip-path: inset(0 0 0 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="paper-card"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-fps="30"
+    >
+      <div id="pc-bg"></div>
+      <div class="pc-anchor">
+        <div id="pc-card" class="pc-card">
+          <div id="pc-shadow" class="pc-shadow"><div class="pc-shadow-shape"></div></div>
+          <div id="pc-paper" class="pc-paper" dir="rtl">
+            <h1 id="pc-title" class="pc-title"></h1>
+            <div id="pc-bar-row" class="pc-bar-row"><span id="pc-bar" class="pc-bar"></span></div>
+            <div id="pc-body" class="pc-body">
+              <p id="pc-line-1" class="pc-line"></p>
+              <p id="pc-line-2" class="pc-line"></p>
+              <p id="pc-line-3" class="pc-line"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var T = window.PaperCardTiming;
+        var v = window.__hyperframes.getVariables();
+        var root = document.getElementById("root");
+        var card = document.getElementById("pc-card");
+        var shadow = document.getElementById("pc-shadow");
+        var title = document.getElementById("pc-title");
+        var barRow = document.getElementById("pc-bar-row");
+        var bar = document.getElementById("pc-bar");
+        var body = document.getElementById("pc-body");
+
+        var mode = v.background_mode || "transparent";
+        if (mode !== "transparent") root.classList.add("pc-green");
+        if (mode === "green_hard_shadow") root.classList.add("pc-green-hard");
+        var softShadow = mode === "transparent";
+
+        // ---- content --------------------------------------------------------
+        var titleText = String(v.title_text || "").trim();
+        title.textContent = titleText;
+        if (!titleText) {
+          title.remove();
+          barRow.remove();
+        }
+
+        var phrase = String(v.highlight_phrase || "").trim();
+        var raw = [v.body_line_1, v.body_line_2, v.body_line_3].map(function (s) {
+          return String(s || "").trim();
+        });
+        var lineEls = [];
+        var hlLine = -1;
+        var hlFill = null;
+        raw.forEach(function (text, i) {
+          var el = document.getElementById("pc-line-" + (i + 1));
+          if (!text) {
+            el.remove();
+            return;
+          }
+          var at = phrase && hlLine < 0 ? text.indexOf(phrase) : -1;
+          if (at >= 0) {
+            hlLine = lineEls.length;
+            el.appendChild(document.createTextNode(text.slice(0, at)));
+            var hl = document.createElement("span");
+            hl.className = "pc-hl";
+            var ink = document.createElement("span");
+            ink.textContent = phrase;
+            hlFill = document.createElement("span");
+            hlFill.className = "pc-hl-fill";
+            hlFill.setAttribute("aria-hidden", "true");
+            // Intentional layering: this is a copy of the ink phrase wiped over it.
+            hlFill.setAttribute("data-layout-allow-overlap", "");
+            hlFill.setAttribute("data-layout-allow-overflow", "");
+            hl.setAttribute("data-layout-allow-overlap", "");
+            hlFill.textContent = phrase;
+            hl.appendChild(ink);
+            hl.appendChild(hlFill);
+            el.appendChild(hl);
+            el.appendChild(document.createTextNode(text.slice(at + phrase.length)));
+          } else {
+            el.textContent = text;
+          }
+          lineEls.push(el);
+        });
+        if (!lineEls.length) body.remove();
+
+        function build() {
+          // ---- fit: body lines stay one line each (max 3 lines total) -----
+          var inner = 900 - 2 * 60;
+          lineEls.forEach(function (el) {
+            var size = 46;
+            while (el.scrollWidth > inner && size > 34) {
+              size -= 1;
+              el.style.fontSize = size + "px";
+            }
+          });
+          // Title: at most two lines at 72px, else step down.
+          var tSize = 72;
+          while (titleText && title.offsetHeight > 72 * 1.3 * 2 + 2 && tSize > 52) {
+            tSize -= 2;
+            title.style.fontSize = tSize + "px";
+          }
+
+          // ---- timing -----------------------------------------------------
+          var p = T.plan({
+            holdDuration: v.hold_duration,
+            lineCount: lineEls.length,
+            highlightLine: hlFill ? hlLine : -1,
+          });
+          window.__paperCardPlan = p; // markers + beats, for tooling
+
+          var tl = gsap.timeline({ paused: true });
+          var REST_ROT = -1.5;
+
+          // ---- IN (0.5s) --------------------------------------------------
+          // Each variant is data: a start pose, then one keyframe track per
+          // property (so no two tweens ever fight over a property).
+          // Track entries are [value, duration, ease].
+          var ENTER = {
+            // In from the right edge; the rotation overshoots, then a 1°
+            // correction as the sheet settles on the table.
+            SLIDE: {
+              from: { x: 1180, rotation: 1.2 },
+              x: [[0, 0.5, "power3.out"]],
+              rotation: [
+                [REST_ROT - 1, 0.36, "power2.out"],
+                [REST_ROT, 0.14, "sine.inOut"],
+              ],
+            },
+            // Falls under gravity, lands slightly under-scale, one small settle.
+            DROP: {
+              from: { y: -1250, scale: 1.05, rotation: -3.2 },
+              y: [
+                [0, 0.34, "power2.in"],
+                [-8, 0.08, "power1.out"],
+                [0, 0.08, "power1.in"],
+              ],
+              scale: [
+                [0.99, 0.34, "power1.in"],
+                [1, 0.16, "power1.out"],
+              ],
+              rotation: [[REST_ROT, 0.5, "power2.out"]],
+              // In the air the shadow is loose and faint; it tightens on landing.
+              shadowFrom: { y: 70, scale: 1.04, opacity: 0.12, blur: 30 },
+            },
+            // Camera moves onto the sheet.
+            PUSH_IN: {
+              from: { scale: 0.85, opacity: 0 },
+              scale: [[1, 0.5, "power3.out"]],
+              opacity: [[1, 0.2, "none"]],
+            },
+          };
+          var V = ENTER[v.enter_variant] || ENTER.SLIDE;
+          var rest = { x: 0, y: 0, scale: 1, rotation: REST_ROT, opacity: 1 };
+          tl.set(card, Object.assign({}, rest, V.from), 0);
+          ["x", "y", "scale", "rotation", "opacity"].forEach(function (prop) {
+            if (!V[prop]) return;
+            tl.to(
+              card,
+              {
+                keyframes: V[prop].map(function (k) {
+                  var kf = { duration: k[1], ease: k[2] };
+                  kf[prop] = k[0];
+                  return kf;
+                }),
+              },
+              0,
+            );
+          });
+
+          var shadowRest = softShadow
+            ? {
+                y: T.SHADOW.y,
+                scale: 1,
+                opacity: T.SHADOW.opacity,
+                filter: "blur(" + T.SHADOW.blur / 2 + "px)",
+              }
+            : { y: T.SHADOW.y, scale: 1 };
+          var sf = V.shadowFrom;
+          if (sf) {
+            var shadowFrom = softShadow
+              ? { y: sf.y, scale: sf.scale, opacity: sf.opacity, filter: "blur(" + sf.blur + "px)" }
+              : { y: sf.y * 0.6, scale: 1 };
+            tl.set(shadow, shadowFrom, 0);
+            tl.to(shadow, Object.assign({ duration: 0.34, ease: "power2.in" }, shadowRest), 0);
+          } else {
+            tl.set(shadow, shadowRest, 0);
+          }
+
+          // ---- BUILD --------------------------------------------------------
+          if (titleText) {
+            tl.fromTo(
+              title,
+              { opacity: 0, y: 14 },
+              { opacity: 1, y: 0, duration: p.titleDur, ease: "power2.out" },
+              p.titleAt,
+            );
+            tl.fromTo(
+              bar,
+              { scaleX: 0 },
+              { scaleX: 1, duration: p.barDur, ease: "power2.inOut" },
+              p.barAt,
+            );
+          }
+          lineEls.forEach(function (el, i) {
+            tl.fromTo(
+              el,
+              { opacity: 0, y: 18 },
+              { opacity: 1, y: 0, duration: p.lineDur, ease: "power2.out" },
+              p.lines[i],
+            );
+          });
+          if (hlFill && p.highlightAt != null) {
+            // right -> left wipe (RTL reading direction)
+            tl.fromTo(
+              hlFill,
+              { clipPath: "inset(0% 0% 0% 100%)" },
+              { clipPath: "inset(0% 0% 0% 0%)", duration: p.highlightDur, ease: "power2.inOut" },
+              p.highlightAt,
+            );
+          }
+
+          // ---- OUT (0.4s): slides out left, slight rotation, ease-in --------
+          tl.to(
+            card,
+            { x: -1250, rotation: REST_ROT - 4, duration: p.outDur, ease: "power2.in" },
+            p.outAt,
+          );
+
+          window.__timelines["paper-card"] = tl;
+          if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+        }
+
+        document.fonts.ready.then(build);
+      })();
+    </script>
+  </body>
+</html>

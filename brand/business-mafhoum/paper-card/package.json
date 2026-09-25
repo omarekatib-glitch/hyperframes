@@ -1,0 +1,13 @@
+{
+  "name": "paper-card",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.71 preview",
+    "check": "npx --yes hyperframes@0.8.71 check",
+    "render": "npx --yes hyperframes@0.8.71 render --format mov",
+    "render:4k": "npx --yes hyperframes@0.8.71 render --format mov --resolution portrait-4k",
+    "markers": "node scripts/markers.mjs",
+    "texture": "python3 scripts/make-paper-texture.py"
+  }
+}
