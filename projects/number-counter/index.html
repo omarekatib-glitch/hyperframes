@@ -1,0 +1,290 @@
+<!doctype html>
+<html
+  lang="ar"
+  data-resolution="portrait"
+  data-composition-variables='[
+    {"id":"start_value","type":"number","label":"Start value","default":0,"step":0.01},
+    {"id":"end_value","type":"number","label":"End value","default":38,"step":0.01},
+    {"id":"decimals","type":"number","label":"Decimals","default":0,"min":0,"max":3,"step":1},
+    {"id":"prefix","type":"string","label":"Prefix (EGP, $)","default":"","maxLength":4},
+    {"id":"suffix","type":"string","label":"Suffix (%, K, M)","default":"%","maxLength":4},
+    {"id":"label_text","type":"string","label":"Label (optional, AR or EN)","default":"معدل التضخم","maxLength":40},
+    {"id":"count_duration","type":"number","label":"Count duration","default":1.5,"min":0.8,"max":3,"step":0.1,"unit":"s"},
+    {"id":"hold_duration","type":"number","label":"Hold duration","default":1.3,"min":0,"max":10,"step":0.1,"unit":"s"},
+    {"id":"max_width_pct","type":"number","label":"Max block width (% of frame)","default":30,"min":10,"max":90,"step":1,"unit":"%"},
+    {"id":"green_screen","type":"boolean","label":"Green-screen fallback (#00FF00, no shadow)","default":false}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>NUMBER_COUNTER</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Montserrat";
+        src: url("assets/fonts/Montserrat-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Cairo";
+        src: url("assets/fonts/Cairo-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+      :root {
+        --brass: #c9a04a;
+        --cream: #f5f0e8;
+        --num-size: 160px;
+        --shadow: 0 0 12px rgba(0, 0, 0, 0.25);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: transparent;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+      }
+      #root.is-green {
+        background: #00ff00;
+        --shadow: none;
+      }
+      /* Zero-height row whose top sits at 28% frame height: flex centering
+         puts the block's vertical center exactly on that line. */
+      .anchor {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 28%;
+        height: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        opacity: 0;
+      }
+      .fit {
+        display: block;
+      }
+      .figure {
+        display: flex;
+        align-items: baseline;
+        direction: ltr;
+        unicode-bidi: isolate;
+        white-space: nowrap;
+        color: var(--brass);
+        font-family: "Montserrat", "Cairo", sans-serif;
+        font-weight: 700;
+        line-height: 1;
+        text-shadow: var(--shadow);
+        font-variant-numeric: tabular-nums lining-nums;
+        font-feature-settings:
+          "tnum" 1,
+          "lnum" 1;
+      }
+      .value {
+        font-size: var(--num-size);
+        letter-spacing: -0.01em;
+      }
+      .affix {
+        font-size: calc(var(--num-size) * 0.6);
+      }
+      .affix:empty {
+        display: none;
+      }
+      .affix.is-word.prefix {
+        margin-right: 0.22em;
+      }
+      .affix.is-word.suffix {
+        margin-left: 0.22em;
+      }
+      .label {
+        color: var(--cream);
+        font-family: "Montserrat", sans-serif;
+        font-weight: 700;
+        font-size: 44px;
+        line-height: 1.3;
+        text-align: center;
+        text-shadow: var(--shadow);
+      }
+      .label.is-arabic {
+        font-family: "Cairo", sans-serif;
+        direction: rtl;
+      }
+      .label:empty {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920">
+      <div class="anchor">
+        <div id="nc-block" class="block">
+          <div id="nc-fit" class="fit">
+            <div id="nc-figure" class="figure">
+              <span id="nc-prefix" class="affix prefix"></span
+              ><span id="nc-value" class="value">0</span
+              ><span id="nc-suffix" class="affix suffix"></span>
+            </div>
+          </div>
+          <div id="nc-label" class="label"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ---- Timing lock (seconds) -------------------------------------------
+      const IN = 0.2;
+      const LAND = 0.2;
+      const OUT = 0.2;
+      const RISE = 20;
+      const PULSE = 1.04;
+      const FRAME_W = 1080;
+
+      // Declared defaults, overlaid with runtime/render overrides when present.
+      const declared = JSON.parse(document.documentElement.dataset.compositionVariables || "[]");
+      const defaults = Object.fromEntries(declared.map((d) => [d.id, d.default]));
+      const hf = window.__hyperframes;
+      const vars = {
+        ...defaults,
+        ...(hf && typeof hf.getVariables === "function" ? hf.getVariables() : {}),
+      };
+      const num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
+      const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+      const startValue = num(vars.start_value, 0);
+      const endValue = num(vars.end_value, 0);
+      const decimals = clamp(Math.round(num(vars.decimals, 0)), 0, 3);
+      const countDur = clamp(num(vars.count_duration, 1.5), 0.8, 3);
+      const holdDur = Math.max(0, num(vars.hold_duration, 1.3));
+      const maxWidth = (clamp(num(vars.max_width_pct, 30), 10, 90) / 100) * FRAME_W;
+      const prefix = String(vars.prefix ?? "").trim();
+      const suffix = String(vars.suffix ?? "").trim();
+      const labelText = String(vars.label_text ?? "").trim();
+
+      // Marker times, exposed for tooling (scripts/export-markers.mjs mirrors this math).
+      const T_COUNT = IN;
+      const T_LAND = IN + countDur;
+      const T_OUT = T_LAND + LAND + holdDur;
+      const TOTAL = T_OUT + OUT;
+      window.__numberCounterMarkers = [
+        { name: "SFX_TICK", time: T_COUNT },
+        { name: "SFX_CHING", time: T_LAND },
+      ];
+
+      // Deterministic formatting: fixed decimals + comma thousands, no locale APIs.
+      function formatValue(v) {
+        const fixed = Math.abs(v).toFixed(decimals);
+        const [intPart, frac] = fixed.split(".");
+        const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        const negative = v < 0 && Number(fixed) !== 0;
+        return (negative ? "-" : "") + grouped + (frac ? "." + frac : "");
+      }
+
+      const root = document.getElementById("root");
+      const valueEl = document.getElementById("nc-value");
+      const prefixEl = document.getElementById("nc-prefix");
+      const suffixEl = document.getElementById("nc-suffix");
+      const labelEl = document.getElementById("nc-label");
+      const figureEl = document.getElementById("nc-figure");
+
+      if (vars.green_screen === true) root.classList.add("is-green");
+
+      // Word affixes (EGP, USD) get a space; symbols ($, %, K, M) sit tight.
+      const isWord = (s) => s.length > 1;
+      prefixEl.textContent = prefix;
+      suffixEl.textContent = suffix;
+      prefixEl.classList.toggle("is-word", isWord(prefix));
+      suffixEl.classList.toggle("is-word", isWord(suffix));
+
+      labelEl.textContent = labelText;
+      labelEl.classList.toggle("is-arabic", /[؀-ۿݐ-ݿﭐ-﻿]/.test(labelText));
+      // Label stays on one line; it wraps only past the title-safe width (86%).
+      labelEl.style.maxWidth = FRAME_W * 0.86 + "px";
+
+      valueEl.textContent = formatValue(startValue);
+
+      // Timeline is registered synchronously so the runtime can infer the
+      // variable-driven duration; the width fit waits for fonts (static set).
+      const counter = { v: startValue };
+      const tl = gsap.timeline({ paused: true });
+
+      // IN: fade + rise 20px, ease-out.
+      tl.fromTo(
+        "#nc-block",
+        { opacity: 0, y: RISE },
+        { opacity: 1, y: 0, duration: IN, ease: "power2.out" },
+        0,
+      );
+
+      // COUNT: fast start, decelerating into the final value.
+      tl.fromTo(
+        counter,
+        { v: startValue },
+        {
+          v: endValue,
+          duration: countDur,
+          ease: "power3.out",
+          onUpdate: () => {
+            valueEl.textContent = formatValue(counter.v);
+          },
+        },
+        T_COUNT,
+      );
+
+      // LAND: single 100 → 104 → 100% pulse.
+      tl.fromTo(
+        "#nc-figure",
+        { scale: 1 },
+        { scale: PULSE, duration: LAND / 2, ease: "sine.out", transformOrigin: "50% 60%" },
+        T_LAND,
+      );
+      tl.to("#nc-figure", { scale: 1, duration: LAND / 2, ease: "sine.in" }, T_LAND + LAND / 2);
+
+      // OUT: fade.
+      tl.to("#nc-block", { opacity: 0, duration: OUT, ease: "power1.in" }, T_OUT);
+
+      tl.seek(0);
+      window.__timelines["main"] = tl;
+
+      function fitFigure() {
+        // Fit: measure the widest state (start or end string) and scale the
+        // figure down once, statically, so the block never exceeds max width.
+        let widest = 0;
+        for (const v of [startValue, endValue]) {
+          valueEl.textContent = formatValue(v);
+          widest = Math.max(widest, figureEl.offsetWidth);
+        }
+        valueEl.textContent = formatValue(counter.v);
+        const fitScale = widest > maxWidth ? maxWidth / widest : 1;
+        gsap.set("#nc-fit", { scale: fitScale, transformOrigin: "50% 50%" });
+        // Keep the layout box in step with the visual scale so the label gap stays 20px.
+        const h = figureEl.offsetHeight;
+        gsap.set("#nc-fit", {
+          marginTop: (-(1 - fitScale) * h) / 2,
+          marginBottom: (-(1 - fitScale) * h) / 2,
+        });
+      }
+
+      document.fonts.ready.then(fitFigure);
+    </script>
+  </body>
+</html>
