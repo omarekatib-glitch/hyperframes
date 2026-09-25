@@ -51,8 +51,19 @@ HyperFrames can't write Premiere sequence markers into the file. The click is al
 - Shadow: black at 25%, 10px blur. It is removed in the chroma fallback.
 - Not allowed: motion during the hold, pulsing, icons, underlines, blue text.
 
+## Edit in Studio (Windows desktop shortcut)
+
+Run this once in PowerShell from this folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-desktop-shortcut.ps1
+```
+
+Double-clicking **SECTION_HEADER Studio** on the desktop runs `open-studio.ps1`. That starts the HyperFrames Studio server and opens the timeline editor at `http://localhost:3002`. Leave the PowerShell window open while you edit; closing it stops Studio. Edits save to `index.html` in this folder. Requires Node.js (LTS).
+
 ## Files
 
 - `index.html`: the composition
+- `open-studio.ps1` / `install-desktop-shortcut.ps1`: the Studio launcher and the desktop-shortcut installer
 - `assets/fonts/`: Cairo 700 (Arabic + Latin subsets) and Montserrat 700 (Latin), both under the OFL
 - `assets/vendor/gsap.min.js`: GSAP 3.14.2, bundled so renders never make a network request
