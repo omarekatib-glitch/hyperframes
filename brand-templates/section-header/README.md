@@ -51,26 +51,20 @@ HyperFrames can't write Premiere sequence markers into the file. The click is al
 - Shadow: black at 25%, 10px blur. It is removed in the chroma fallback.
 - Not allowed: motion during the hold, pulsing, icons, underlines, blue text.
 
-## Edit in Studio (Windows, works offline)
+## Edit in Studio (Windows desktop .cmd, works offline)
 
-Paste this into PowerShell once, while online:
+Paste the whole contents of [`make-desktop-cmd.ps1`](make-desktop-cmd.ps1) into PowerShell once. It writes **HyperFrames Studio - SECTION_HEADER.cmd** to your desktop.
 
-```powershell
-irm https://raw.githubusercontent.com/omarekatib-glitch/hyperframes/refs/heads/claude/sweet-shannon-ijxlan/brand-templates/section-header/setup-windows.ps1 | iex
-```
-
-It installs Node.js and FFmpeg if they are missing, copies the template to `Documents\HyperFrames\SECTION_HEADER`, installs the HyperFrames CLI and its render browser there, and creates a **SECTION_HEADER Studio** shortcut on the desktop. Re-running it keeps your edited `index.html`.
-
-After that, the shortcut works offline:
-
-- Double-clicking it opens the timeline editor at `http://localhost:3002`. Keep the PowerShell window open while you edit.
+- **First double-click (online):** it downloads the template to `Documents\HyperFrames\SECTION_HEADER`, installs Node.js / FFmpeg if missing, and installs the editor locally. If it says so, close the window and double-click again.
+- **Every double-click after that (offline is fine):** it opens the timeline editor at `http://localhost:3002`. Keep the window open while you edit.
 - **Edit text:** use the Variables panel. It saves into `index.html`.
 - **Download:** Render panel → MOV (ProRes 4444 alpha) / WebM / MP4 → Download.
 
 ## Files
 
 - `index.html`: the composition
-- `setup-windows.ps1`: one-time Windows setup (the paste command above)
+- `make-desktop-cmd.ps1`: the paste-once command that writes the desktop `.cmd`
+- `setup-windows.ps1`: the one-time install the `.cmd` runs on first launch
 - `open-studio.ps1` / `install-desktop-shortcut.ps1`: the offline Studio launcher and a standalone shortcut installer
 - `assets/fonts/`: Cairo 700 (Arabic + Latin subsets) and Montserrat 700 (Latin), both under the OFL
 - `assets/vendor/gsap.min.js`: GSAP 3.14.2, bundled so renders never make a network request

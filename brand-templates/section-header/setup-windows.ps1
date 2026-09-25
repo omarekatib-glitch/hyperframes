@@ -71,18 +71,21 @@ try {
   Pop-Location
 }
 
-Step "Creating the desktop shortcut"
-# Inline rather than calling install-desktop-shortcut.ps1: running .ps1 files is blocked
-# under the default execution policy, but this pasted command is not.
-$shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "SECTION_HEADER Studio.lnk"
-$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcutPath)
-$shortcut.TargetPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
-$shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $Dest 'open-studio.ps1')`""
-$shortcut.WorkingDirectory = $Dest
-$shortcut.IconLocation = "$env:SystemRoot\System32\shell32.dll,115"
-$shortcut.Description = "Open SECTION_HEADER in the HyperFrames timeline editor"
-$shortcut.Save()
-Write-Host "Shortcut created: $shortcutPath"
+# The desktop .cmd launcher sets HF_SKIP_SHORTCUT=1: it is the shortcut already.
+if ($env:HF_SKIP_SHORTCUT -ne "1") {
+  Step "Creating the desktop shortcut"
+  # Inline rather than calling install-desktop-shortcut.ps1: running .ps1 files is blocked
+  # under the default execution policy, but this pasted command is not.
+  $shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "SECTION_HEADER Studio.lnk"
+  $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($shortcutPath)
+  $shortcut.TargetPath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+  $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $Dest 'open-studio.ps1')`""
+  $shortcut.WorkingDirectory = $Dest
+  $shortcut.IconLocation = "$env:SystemRoot\System32\shell32.dll,115"
+  $shortcut.Description = "Open SECTION_HEADER in the HyperFrames timeline editor"
+  $shortcut.Save()
+  Write-Host "Shortcut created: $shortcutPath"
+}
 
-Write-Host "`nDone. Double-click 'SECTION_HEADER Studio' on your desktop (works offline)." -ForegroundColor Green
+Write-Host "`nDone. The template and editor are installed in $Dest (works offline)." -ForegroundColor Green
 }
