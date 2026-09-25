@@ -1,0 +1,312 @@
+<!doctype html>
+<html
+  lang="ar"
+  data-composition-variables='[
+    {"id":"label_text","type":"string","label":"Label (line 1)","default":"الخطوة ٢","maxLength":40},
+    {"id":"title_text","type":"string","label":"Title (line 2)","default":"Cash Flow","maxLength":40},
+    {"id":"next_title_text","type":"string","label":"Next title (section change — leave empty to skip)","default":"","maxLength":40},
+    {"id":"change_at","type":"number","label":"Section change time (s from start, 0 = mid-hold)","default":0,"min":0,"max":60.5,"step":0.1,"unit":"s"},
+    {"id":"alignment","type":"enum","label":"Alignment","default":"right","options":[{"value":"right","label":"Right (Arabic)"},{"value":"center","label":"Center"},{"value":"left","label":"Left"}]},
+    {"id":"hold_duration","type":"number","label":"Hold duration","default":15,"min":3,"max":60,"step":0.5,"unit":"s"},
+    {"id":"chroma_fallback","type":"boolean","label":"Green-screen fallback (#00FF00, no shadow)","default":false}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>SECTION_HEADER</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 700;
+        font-style: normal;
+        font-display: block;
+        src: url("assets/fonts/cairo-arabic-700-normal.woff2") format("woff2");
+        unicode-range:
+          U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E,
+          U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 700;
+        font-style: normal;
+        font-display: block;
+        src: url("assets/fonts/cairo-latin-700-normal.woff2") format("woff2");
+        unicode-range:
+          U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+          U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-weight: 700;
+        font-style: normal;
+        font-display: block;
+        src: url("assets/fonts/montserrat-latin-700-normal.woff2") format("woff2");
+      }
+
+      :root {
+        --cream: #f5f0e8;
+        --blue: #1d6fa4;
+        --top: 180px;
+        --margin: 64px;
+        --label-gap: 10px;
+        --bar-radius: 10px;
+        --pad-x: 24px;
+        --pad-y: 12px;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: transparent;
+      }
+      body.chroma {
+        background: #00ff00;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* The whole header block — OUT fades + rises this node. */
+      #block {
+        position: absolute;
+        top: var(--top);
+        left: var(--margin);
+        right: var(--margin);
+      }
+
+      .ar {
+        font-family: "Cairo", sans-serif;
+        direction: rtl;
+      }
+      .en {
+        font-family: "Montserrat", sans-serif;
+        direction: ltr;
+      }
+
+      #label {
+        display: block;
+        color: var(--cream);
+        font-weight: 700;
+        font-size: 34px;
+        line-height: 1.25;
+        white-space: nowrap;
+        opacity: 0;
+      }
+      #block[data-align="right"] #label {
+        text-align: right;
+      }
+      #block[data-align="center"] #label {
+        text-align: center;
+      }
+      #block[data-align="left"] #label {
+        text-align: left;
+      }
+
+      /* Bar row: sized in JS to hug the title. */
+      #bar-row {
+        position: relative;
+        width: 100%;
+        margin-top: var(--label-gap);
+      }
+      #bar-shadow {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
+      }
+      body.chroma #bar-shadow {
+        filter: none;
+      }
+      #bar {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: var(--blue);
+        border-radius: var(--bar-radius);
+        overflow: hidden;
+      }
+      .title {
+        position: absolute;
+        top: var(--pad-y);
+        color: var(--cream);
+        font-weight: 700;
+        font-size: 54px;
+        line-height: 1.25;
+        white-space: nowrap;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+      data-fps="30"
+    >
+      <div id="block" data-align="right">
+        <span id="label">الخطوة ٢</span>
+        <div id="bar-row">
+          <div id="bar-shadow">
+            <div id="bar">
+              <span id="title-a" class="title">Cash Flow</span>
+              <span id="title-b" class="title"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        // ---- timing constants (seconds) --------------------------------------
+        const IN = 0.5;
+        const WIPE = 0.3; // bar wipe right→left, 0.0–0.3  (SFX_CLICK marker @ 0.0)
+        const TITLE_AT = 0.2; // title fade-in start
+        const LABEL_AT = 0.3; // label fade + 10px drop start
+        const OUT = 0.3; // fade + rise 10px
+        const CHANGE = 0.3; // section-change crossfade + bar resize
+        const LABEL_OPACITY = 0.8;
+
+        const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+        const hf = window.__hyperframes;
+        const v = (hf && hf.getVariables && hf.getVariables()) || {};
+        const str = (x, d) => (typeof x === "string" ? x : d);
+        const num = (x, d) => (typeof x === "number" && isFinite(x) ? x : d);
+
+        const labelText = str(v.label_text, "الخطوة ٢").trim();
+        const titleText = str(v.title_text, "Cash Flow").trim();
+        const nextText = str(v.next_title_text, "").trim();
+        const align = ["right", "center", "left"].includes(v.alignment) ? v.alignment : "right";
+        const hold = Math.min(60, Math.max(3, num(v.hold_duration, 15)));
+        const chroma = v.chroma_fallback === true;
+
+        // Composition length follows hold_duration: IN + hold + OUT. Stamped
+        // synchronously so the runtime sees it before the async timeline build.
+        const total = Math.round((IN + hold + OUT) * 1000) / 1000;
+        document.getElementById("root").setAttribute("data-duration", String(total));
+
+        const block = document.getElementById("block");
+        const label = document.getElementById("label");
+        const row = document.getElementById("bar-row");
+        const shadow = document.getElementById("bar-shadow");
+        const bar = document.getElementById("bar");
+        const titleA = document.getElementById("title-a");
+        const titleB = document.getElementById("title-b");
+
+        const script = (el, text) => {
+          el.textContent = text;
+          el.classList.add(ARABIC.test(text) ? "ar" : "en");
+        };
+        script(label, labelText);
+        script(titleA, titleText);
+        if (nextText) script(titleB, nextText);
+        block.dataset.align = align;
+        if (chroma) document.body.classList.add("chroma");
+
+        // Green-key fallback: an 80%-opacity label over #00FF00 keys with green
+        // contamination, so the fallback label is rendered solid.
+        const labelTarget = chroma ? 1 : LABEL_OPACITY;
+
+        function build() {
+          const padX = 24;
+          const padY = 12;
+          const barW = (el) => Math.ceil(el.getBoundingClientRect().width) + padX * 2;
+          const wA = barW(titleA);
+          const wB = nextText ? barW(titleB) : wA;
+          const h = Math.ceil(titleA.getBoundingClientRect().height) + padY * 2;
+          row.style.height = h + "px";
+
+          // Anchor the bar (and the text inside it) to the alignment edge so a
+          // resize grows/shrinks away from that edge.
+          const tl = gsap.timeline({ paused: true });
+          if (align === "right") {
+            shadow.style.right = "0px";
+            [titleA, titleB].forEach((t) => (t.style.right = padX + "px"));
+          } else if (align === "left") {
+            shadow.style.left = "0px";
+            [titleA, titleB].forEach((t) => (t.style.left = padX + "px"));
+          } else {
+            shadow.style.left = "50%";
+            [titleA, titleB].forEach((t) => (t.style.left = "50%"));
+            tl.set([shadow, titleA, titleB], { xPercent: -50 }, 0);
+          }
+          tl.set(shadow, { width: wA }, 0);
+
+          // ---- IN (0.0 – 0.5) ------------------------------------------------
+          // Bar wipes right→left: the clip opens from the right edge.
+          tl.fromTo(
+            bar,
+            { clipPath: "inset(0% 0% 0% 100% round 10px)" },
+            { clipPath: "inset(0% 0% 0% 0% round 10px)", duration: WIPE, ease: "power2.out" },
+            0,
+          );
+          tl.fromTo(
+            titleA,
+            { opacity: 0 },
+            { opacity: 1, duration: IN - TITLE_AT, ease: "power1.out" },
+            TITLE_AT,
+          );
+          tl.fromTo(
+            label,
+            { opacity: 0, y: -10 },
+            { opacity: labelTarget, y: 0, duration: IN - LABEL_AT, ease: "power2.out" },
+            LABEL_AT,
+          );
+
+          // ---- HOLD (0.5 – 0.5+hold): nothing moves --------------------------
+          const outAt = IN + hold;
+
+          // ---- SECTION CHANGE (optional, inside the hold) --------------------
+          if (nextText) {
+            const req = num(v.change_at, 0);
+            const auto = IN + hold / 2 - CHANGE / 2;
+            const at = Math.min(outAt - CHANGE, Math.max(IN, req > 0 ? req : auto));
+            tl.to(titleA, { opacity: 0, duration: CHANGE, ease: "power1.inOut" }, at);
+            tl.fromTo(
+              titleB,
+              { opacity: 0 },
+              { opacity: 1, duration: CHANGE, ease: "power1.inOut" },
+              at,
+            );
+            if (wB !== wA) {
+              tl.to(shadow, { width: wB, duration: CHANGE, ease: "power2.inOut" }, at);
+            }
+          }
+
+          // ---- OUT (last 0.3s): fade + rise 10px -----------------------------
+          tl.fromTo(
+            block,
+            { opacity: 1, y: 0 },
+            { opacity: 0, y: -10, duration: OUT, ease: "power2.in", immediateRender: false },
+            outAt,
+          );
+
+          window.__timelines["main"] = tl;
+          tl.seek(0);
+        }
+
+        Promise.all([
+          document.fonts.load('700 54px "Cairo"', "\u0627\u0644\u0661"),
+          document.fonts.load('700 54px "Cairo"', "A"),
+          document.fonts.load('700 54px "Montserrat"', "A"),
+        ])
+          .catch(() => {})
+          .then(() => document.fonts.ready)
+          .then(build);
+      })();
+    </script>
+  </body>
+</html>

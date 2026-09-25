@@ -1,0 +1,13 @@
+{
+  "name": "section-header",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.77 preview",
+    "check": "npx --yes hyperframes@0.8.77 check . --at 0.1,0.25,0.4,0.6,8,15.65",
+    "publish": "npx --yes hyperframes@0.8.77 publish",
+    "render:mov": "npx --yes hyperframes@0.8.77 render . --format mov --quality high -o renders/SECTION_HEADER_alpha.mov",
+    "render:webm": "npx --yes hyperframes@0.8.77 render . --format webm --quality high -o renders/SECTION_HEADER_alpha.webm",
+    "render:green": "npx --yes hyperframes@0.8.77 render . --quality high --variables '{\"chroma_fallback\":true}' -o renders/SECTION_HEADER_green.mp4"
+  }
+}
