@@ -175,37 +175,49 @@
           return clamp(Math.floor((SIZE_MAX * maxText) / natural), SIZE_MIN, SIZE_MAX);
         }
 
-        function build() {
-          label.style.fontSize = fitFontSize() + "px";
+        // Timing depends only on hold, so the timeline is built and registered
+        // synchronously: the runtime must see a non-zero duration on its first
+        // readiness check (an async registration can race it on slow machines
+        // and lock the duration at 0). Only the type size waits for the font.
+        // Snap the out-point to a frame boundary and add one clean frame so
+        // the last exported frame is fully transparent — no residual pop
+        // when the clip ends on the Premiere timeline.
+        const outEnd = Math.ceil((IN_DUR + hold + OUT_DUR) * FPS - 1e-6) / FPS;
+        const outStart = outEnd - OUT_DUR;
+        const total = outEnd + FRAME;
+        root.setAttribute("data-duration", total.toFixed(4));
 
-          // Snap the out-point to a frame boundary and add one clean frame so
-          // the last exported frame is fully transparent — no residual pop
-          // when the clip ends on the Premiere timeline.
-          const outEnd = Math.ceil((IN_DUR + hold + OUT_DUR) * FPS - 1e-6) / FPS;
-          const outStart = outEnd - OUT_DUR;
-          const total = outEnd + FRAME;
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo(
+          box,
+          { scale: 0.9, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: IN_DUR,
+            ease: "power2.out",
+            force3D: false,
+            transformOrigin: "50% 50%",
+          },
+          0,
+        );
+        tl.to(box, { opacity: 0, duration: OUT_DUR, ease: "none" }, outStart);
+        tl.set(box, { opacity: 0 }, total);
+        window.__timelines["term-box"] = tl;
 
-          const tl = gsap.timeline({ paused: true });
-          tl.fromTo(
-            box,
-            { scale: 0.9, opacity: 0 },
-            {
-              scale: 1,
-              opacity: 1,
-              duration: IN_DUR,
-              ease: "power2.out",
-              force3D: false,
-              transformOrigin: "50% 50%",
-            },
-            0,
-          );
-          tl.to(box, { opacity: 0, duration: OUT_DUR, ease: "none" }, outStart);
-          tl.set(box, { opacity: 0 }, total);
-
-          window.__timelines["term-box"] = tl;
-        }
-
-        document.fonts.load('700 64px "Montserrat"').then(build, build);
+        // Size once now, then again once Montserrat is loaded. The runtime
+        // holds render-ready on this promise, so no frame is captured with
+        // fallback-font metrics.
+        label.style.fontSize = fitFontSize() + "px";
+        const fontReady = document.fonts
+          .load('700 64px "Montserrat"')
+          .catch(() => undefined)
+          .then(() => {
+            label.style.fontSize = fitFontSize() + "px";
+          });
+        window.__hf = window.__hf || {};
+        window.__hf.buildReady = window.__hf.buildReady || {};
+        window.__hf.buildReady["term-box-font"] = fontReady;
       })();
     </script>
   </body>
