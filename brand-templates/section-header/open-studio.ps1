@@ -1,21 +1,27 @@
-# Opens this project in HyperFrames Studio (the browser timeline editor).
-# Keep this window open while you edit; closing it stops the Studio server.
+# Opens this template in HyperFrames Studio (the browser timeline editor). Works offline.
+# Keep this window open while you edit; closing it stops Studio.
 $ErrorActionPreference = "Stop"
 $Host.UI.RawUI.WindowTitle = "HyperFrames Studio - SECTION_HEADER"
 Set-Location -LiteralPath $PSScriptRoot
 
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-  Write-Host "Node.js is not installed. Install the LTS version from https://nodejs.org, then run this shortcut again." -ForegroundColor Red
+$cli = Join-Path $PSScriptRoot "node_modules\.bin\hyperframes.cmd"
+if (-not (Get-Command node -ErrorAction SilentlyContinue) -or -not (Test-Path -LiteralPath $cli)) {
+  Write-Host "Setup is incomplete. While online, run the setup command from README.md once, then try again." -ForegroundColor Red
   Read-Host "Press Enter to close"
   exit 1
 }
 
-Write-Host "Starting Studio for $PSScriptRoot ..." -ForegroundColor Cyan
-Write-Host "Your browser opens at http://localhost:3002 once it is ready. Edits save to index.html in this folder." -ForegroundColor Cyan
+# No update checks or telemetry, so nothing waits on the network.
+$env:HYPERFRAMES_NO_UPDATE_CHECK = "1"
+$env:HYPERFRAMES_NO_TELEMETRY = "1"
+
+Write-Host "Starting Studio ..." -ForegroundColor Cyan
+Write-Host "The timeline editor opens in your browser at http://localhost:3002" -ForegroundColor Cyan
+Write-Host "  Edit text:  Variables panel (saves into index.html)" -ForegroundColor Gray
+Write-Host "  Download:   Render panel -> MOV (alpha) / WebM / MP4 -> Download" -ForegroundColor Gray
 Write-Host "Close this window to stop Studio." -ForegroundColor DarkGray
 
-# Same pinned CLI version as package.json, so Studio matches the renders.
-npx --yes hyperframes@0.8.77 preview --foreground
+& $cli preview --foreground
 
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Studio exited with an error (code $LASTEXITCODE)." -ForegroundColor Red

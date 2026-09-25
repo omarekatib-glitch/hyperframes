@@ -51,19 +51,26 @@ HyperFrames can't write Premiere sequence markers into the file. The click is al
 - Shadow: black at 25%, 10px blur. It is removed in the chroma fallback.
 - Not allowed: motion during the hold, pulsing, icons, underlines, blue text.
 
-## Edit in Studio (Windows desktop shortcut)
+## Edit in Studio (Windows, works offline)
 
-Run this once in PowerShell from this folder:
+Paste this into PowerShell once, while online:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install-desktop-shortcut.ps1
+irm https://raw.githubusercontent.com/omarekatib-glitch/hyperframes/refs/heads/claude/sweet-shannon-ijxlan/brand-templates/section-header/setup-windows.ps1 | iex
 ```
 
-Double-clicking **SECTION_HEADER Studio** on the desktop runs `open-studio.ps1`. That starts the HyperFrames Studio server and opens the timeline editor at `http://localhost:3002`. Leave the PowerShell window open while you edit; closing it stops Studio. Edits save to `index.html` in this folder. Requires Node.js (LTS).
+It installs Node.js and FFmpeg if they are missing, copies the template to `Documents\HyperFrames\SECTION_HEADER`, installs the HyperFrames CLI and its render browser there, and creates a **SECTION_HEADER Studio** shortcut on the desktop. Re-running it keeps your edited `index.html`.
+
+After that, the shortcut works offline:
+
+- Double-clicking it opens the timeline editor at `http://localhost:3002`. Keep the PowerShell window open while you edit.
+- **Edit text:** use the Variables panel. It saves into `index.html`.
+- **Download:** Render panel → MOV (ProRes 4444 alpha) / WebM / MP4 → Download.
 
 ## Files
 
 - `index.html`: the composition
-- `open-studio.ps1` / `install-desktop-shortcut.ps1`: the Studio launcher and the desktop-shortcut installer
+- `setup-windows.ps1`: one-time Windows setup (the paste command above)
+- `open-studio.ps1` / `install-desktop-shortcut.ps1`: the offline Studio launcher and a standalone shortcut installer
 - `assets/fonts/`: Cairo 700 (Arabic + Latin subsets) and Montserrat 700 (Latin), both under the OFL
 - `assets/vendor/gsap.min.js`: GSAP 3.14.2, bundled so renders never make a network request
