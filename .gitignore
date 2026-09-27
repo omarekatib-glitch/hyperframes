@@ -126,6 +126,17 @@ packages/studio/data/
 !.claude/skills/seam-craft
 !.claude/skills/captions-overlay
 !.claude/skills/oversized-cursor
+# HyperFrames core skill set, installed via `npx skills add heygen-com/hyperframes`
+!.claude/skills/hyperframes
+!.claude/skills/hyperframes-animation
+!.claude/skills/hyperframes-audio
+!.claude/skills/hyperframes-cli
+!.claude/skills/hyperframes-core
+!.claude/skills/hyperframes-creative
+!.claude/skills/hyperframes-keyframes
+!.claude/skills/hyperframes-registry
+!.claude/skills/hyperframes-studio
+!.claude/skills/media-use
 
 .agents/*
 !.agents/skills
@@ -137,6 +148,17 @@ packages/studio/data/
 !.agents/skills/seam-craft
 !.agents/skills/captions-overlay
 !.agents/skills/oversized-cursor
+# HyperFrames core skill set, installed via `npx skills add heygen-com/hyperframes`
+!.agents/skills/hyperframes
+!.agents/skills/hyperframes-animation
+!.agents/skills/hyperframes-audio
+!.agents/skills/hyperframes-cli
+!.agents/skills/hyperframes-core
+!.agents/skills/hyperframes-creative
+!.agents/skills/hyperframes-keyframes
+!.agents/skills/hyperframes-registry
+!.agents/skills/hyperframes-studio
+!.agents/skills/media-use
 skills-lock.json
 
 # Skills from other PRs (not managed here)
