@@ -1,52 +1,49 @@
-<!doctype html>
-<html
-  lang="ar"
-  data-composition-variables='[
-    {"id":"bgMode","type":"enum","label":"BG_MODE","default":"paper","options":[{"value":"paper","label":"Paper (wrinkled cream on charcoal)"},{"value":"green","label":"Green (flat #00FF00 for Ultra Key)"}]},
-    {"id":"layout","type":"enum","label":"LAYOUT","default":"list","options":[{"value":"tree","label":"Tree"},{"value":"list","label":"List"},{"value":"flow","label":"Flow"}]},
-    {"id":"revealedCount","type":"number","label":"REVEALED_COUNT","default":3,"min":1,"max":6,"step":1},
-    {"id":"activeNode","type":"string","label":"ACTIVE_NODE (node id)","default":"gm","placeholder":"rev"},
-    {"id":"startTime","type":"number","label":"START_TIME","default":0,"min":0,"max":30,"step":0.1,"unit":"s"},
-    {"id":"duration","type":"number","label":"DURATION","default":5,"min":2,"max":12,"step":0.1,"unit":"s"},
-    {"id":"xPct","type":"number","label":"POSITION x_pct","default":50,"min":0,"max":100,"step":1,"unit":"%"},
-    {"id":"yPct","type":"number","label":"POSITION y_pct","default":50,"min":0,"max":100,"step":1,"unit":"%"},
-    {"id":"scale","type":"number","label":"SCALE","default":1,"min":0.4,"max":1.6,"step":0.05},
-    {"id":"nodeStagger","type":"number","label":"NODE_STAGGER","default":0.4,"min":0.1,"max":2,"step":0.05,"unit":"s"},
-    {"id":"nodeBuildTime","type":"number","label":"NODE_BUILD_TIME","default":0.5,"min":0.2,"max":1.5,"step":0.05,"unit":"s"},
-    {"id":"connectorTime","type":"number","label":"CONNECTOR_TIME","default":0.4,"min":0.1,"max":1.5,"step":0.05,"unit":"s"},
-    {"id":"labelFontSize","type":"number","label":"LABEL_FONT_SIZE_PX","default":54,"min":24,"max":96,"step":1,"unit":"px"},
-    {"id":"enter","type":"enum","label":"ENTER","default":"drop","options":[{"value":"drop","label":"Drop"},{"value":"slide-left","label":"Slide (from left)"},{"value":"push-in","label":"Push-in"}]},
-    {"id":"exit","type":"enum","label":"EXIT","default":"slide-off","options":[{"value":"slide-off","label":"Slide off"},{"value":"fade","label":"Fade"}]},
-    {"id":"nodesJson","type":"string","label":"NODES as JSON (optional, overrides the six node slots)","default":"","placeholder":"[{\"id\":\"rev\",\"label\":\"الـ Revenue\",\"lang\":\"ar\"}]"},
-    {"id":"n1Id","type":"string","label":"Node 1 · id","default":"rev"},
-    {"id":"n1Label","type":"string","label":"Node 1 · label","default":"الـ Revenue"},
-    {"id":"n1Sublabel","type":"string","label":"Node 1 · sublabel","default":""},
-    {"id":"n1Lang","type":"enum","label":"Node 1 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
-    {"id":"n2Id","type":"string","label":"Node 2 · id","default":"cogs"},
-    {"id":"n2Label","type":"string","label":"Node 2 · label","default":"الـ COGS"},
-    {"id":"n2Sublabel","type":"string","label":"Node 2 · sublabel","default":""},
-    {"id":"n2Lang","type":"enum","label":"Node 2 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
-    {"id":"n3Id","type":"string","label":"Node 3 · id","default":"gm"},
-    {"id":"n3Label","type":"string","label":"Node 3 · label","default":"الـ Gross Margin"},
-    {"id":"n3Sublabel","type":"string","label":"Node 3 · sublabel","default":""},
-    {"id":"n3Lang","type":"enum","label":"Node 3 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
-    {"id":"n4Id","type":"string","label":"Node 4 · id","default":"np"},
-    {"id":"n4Label","type":"string","label":"Node 4 · label","default":"الـ Net Profit"},
-    {"id":"n4Sublabel","type":"string","label":"Node 4 · sublabel","default":""},
-    {"id":"n4Lang","type":"enum","label":"Node 4 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
-    {"id":"n5Id","type":"string","label":"Node 5 · id","default":""},
-    {"id":"n5Label","type":"string","label":"Node 5 · label","default":""},
-    {"id":"n5Sublabel","type":"string","label":"Node 5 · sublabel","default":""},
-    {"id":"n5Lang","type":"enum","label":"Node 5 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
-    {"id":"n6Id","type":"string","label":"Node 6 · id","default":""},
-    {"id":"n6Label","type":"string","label":"Node 6 · label","default":""},
-    {"id":"n6Sublabel","type":"string","label":"Node 6 · sublabel","default":""},
-    {"id":"n6Lang","type":"enum","label":"Node 6 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]}
-  ]'
->
+<!DOCTYPE html>
+<html lang="ar" data-composition-variables="[
+    {&quot;id&quot;:&quot;bgMode&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;BG_MODE&quot;,&quot;default&quot;:&quot;paper&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;paper&quot;,&quot;label&quot;:&quot;Paper (wrinkled cream on charcoal)&quot;},{&quot;value&quot;:&quot;green&quot;,&quot;label&quot;:&quot;Green (flat #00FF00 for Ultra Key)&quot;}]},
+    {&quot;id&quot;:&quot;layout&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;LAYOUT&quot;,&quot;default&quot;:&quot;list&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;tree&quot;,&quot;label&quot;:&quot;Tree&quot;},{&quot;value&quot;:&quot;list&quot;,&quot;label&quot;:&quot;List&quot;},{&quot;value&quot;:&quot;flow&quot;,&quot;label&quot;:&quot;Flow&quot;}]},
+    {&quot;id&quot;:&quot;revealedCount&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;REVEALED_COUNT&quot;,&quot;default&quot;:3,&quot;min&quot;:1,&quot;max&quot;:6,&quot;step&quot;:1},
+    {&quot;id&quot;:&quot;activeNode&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;ACTIVE_NODE (node id)&quot;,&quot;default&quot;:&quot;gm&quot;,&quot;placeholder&quot;:&quot;rev&quot;},
+    {&quot;id&quot;:&quot;startTime&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;START_TIME&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:30,&quot;step&quot;:0.1,&quot;unit&quot;:&quot;s&quot;},
+    {&quot;id&quot;:&quot;duration&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;DURATION&quot;,&quot;default&quot;:5,&quot;min&quot;:2,&quot;max&quot;:12,&quot;step&quot;:0.1,&quot;unit&quot;:&quot;s&quot;},
+    {&quot;id&quot;:&quot;xPct&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;POSITION x_pct&quot;,&quot;default&quot;:50,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1,&quot;unit&quot;:&quot;%&quot;},
+    {&quot;id&quot;:&quot;yPct&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;POSITION y_pct&quot;,&quot;default&quot;:50,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1,&quot;unit&quot;:&quot;%&quot;},
+    {&quot;id&quot;:&quot;scale&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;SCALE&quot;,&quot;default&quot;:1,&quot;min&quot;:0.4,&quot;max&quot;:1.6,&quot;step&quot;:0.05},
+    {&quot;id&quot;:&quot;nodeStagger&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;NODE_STAGGER&quot;,&quot;default&quot;:0.4,&quot;min&quot;:0.1,&quot;max&quot;:2,&quot;step&quot;:0.05,&quot;unit&quot;:&quot;s&quot;},
+    {&quot;id&quot;:&quot;nodeBuildTime&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;NODE_BUILD_TIME&quot;,&quot;default&quot;:0.5,&quot;min&quot;:0.2,&quot;max&quot;:1.5,&quot;step&quot;:0.05,&quot;unit&quot;:&quot;s&quot;},
+    {&quot;id&quot;:&quot;connectorTime&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;CONNECTOR_TIME&quot;,&quot;default&quot;:0.4,&quot;min&quot;:0.1,&quot;max&quot;:1.5,&quot;step&quot;:0.05,&quot;unit&quot;:&quot;s&quot;},
+    {&quot;id&quot;:&quot;labelFontSize&quot;,&quot;type&quot;:&quot;number&quot;,&quot;label&quot;:&quot;LABEL_FONT_SIZE_PX&quot;,&quot;default&quot;:54,&quot;min&quot;:24,&quot;max&quot;:96,&quot;step&quot;:1,&quot;unit&quot;:&quot;px&quot;},
+    {&quot;id&quot;:&quot;enter&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;ENTER&quot;,&quot;default&quot;:&quot;drop&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;drop&quot;,&quot;label&quot;:&quot;Drop&quot;},{&quot;value&quot;:&quot;slide-left&quot;,&quot;label&quot;:&quot;Slide (from left)&quot;},{&quot;value&quot;:&quot;push-in&quot;,&quot;label&quot;:&quot;Push-in&quot;}]},
+    {&quot;id&quot;:&quot;exit&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;EXIT&quot;,&quot;default&quot;:&quot;slide-off&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;slide-off&quot;,&quot;label&quot;:&quot;Slide off&quot;},{&quot;value&quot;:&quot;fade&quot;,&quot;label&quot;:&quot;Fade&quot;}]},
+    {&quot;id&quot;:&quot;nodesJson&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;NODES as JSON (optional, overrides the six node slots)&quot;,&quot;default&quot;:&quot;&quot;,&quot;placeholder&quot;:&quot;[{\&quot;id\&quot;:\&quot;rev\&quot;,\&quot;label\&quot;:\&quot;الـ Revenue\&quot;,\&quot;lang\&quot;:\&quot;ar\&quot;}]&quot;},
+    {&quot;id&quot;:&quot;n1Id&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 1 · id&quot;,&quot;default&quot;:&quot;rev&quot;},
+    {&quot;id&quot;:&quot;n1Label&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 1 · label&quot;,&quot;default&quot;:&quot;الـ Revenue&quot;},
+    {&quot;id&quot;:&quot;n1Sublabel&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 1 · sublabel&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n1Lang&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;Node 1 · LABEL_LANG&quot;,&quot;default&quot;:&quot;ar&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;ar&quot;,&quot;label&quot;:&quot;ar&quot;},{&quot;value&quot;:&quot;en&quot;,&quot;label&quot;:&quot;en&quot;}]},
+    {&quot;id&quot;:&quot;n2Id&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 2 · id&quot;,&quot;default&quot;:&quot;cogs&quot;},
+    {&quot;id&quot;:&quot;n2Label&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 2 · label&quot;,&quot;default&quot;:&quot;الـ COGS&quot;},
+    {&quot;id&quot;:&quot;n2Sublabel&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 2 · sublabel&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n2Lang&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;Node 2 · LABEL_LANG&quot;,&quot;default&quot;:&quot;ar&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;ar&quot;,&quot;label&quot;:&quot;ar&quot;},{&quot;value&quot;:&quot;en&quot;,&quot;label&quot;:&quot;en&quot;}]},
+    {&quot;id&quot;:&quot;n3Id&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 3 · id&quot;,&quot;default&quot;:&quot;gm&quot;},
+    {&quot;id&quot;:&quot;n3Label&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 3 · label&quot;,&quot;default&quot;:&quot;الـ Gross Margin&quot;},
+    {&quot;id&quot;:&quot;n3Sublabel&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 3 · sublabel&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n3Lang&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;Node 3 · LABEL_LANG&quot;,&quot;default&quot;:&quot;ar&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;ar&quot;,&quot;label&quot;:&quot;ar&quot;},{&quot;value&quot;:&quot;en&quot;,&quot;label&quot;:&quot;en&quot;}]},
+    {&quot;id&quot;:&quot;n4Id&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 4 · id&quot;,&quot;default&quot;:&quot;np&quot;},
+    {&quot;id&quot;:&quot;n4Label&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 4 · label&quot;,&quot;default&quot;:&quot;الـ Net Profit&quot;},
+    {&quot;id&quot;:&quot;n4Sublabel&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 4 · sublabel&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n4Lang&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;Node 4 · LABEL_LANG&quot;,&quot;default&quot;:&quot;ar&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;ar&quot;,&quot;label&quot;:&quot;ar&quot;},{&quot;value&quot;:&quot;en&quot;,&quot;label&quot;:&quot;en&quot;}]},
+    {&quot;id&quot;:&quot;n5Id&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 5 · id&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n5Label&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 5 · label&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n5Sublabel&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 5 · sublabel&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n5Lang&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;Node 5 · LABEL_LANG&quot;,&quot;default&quot;:&quot;ar&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;ar&quot;,&quot;label&quot;:&quot;ar&quot;},{&quot;value&quot;:&quot;en&quot;,&quot;label&quot;:&quot;en&quot;}]},
+    {&quot;id&quot;:&quot;n6Id&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 6 · id&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n6Label&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 6 · label&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n6Sublabel&quot;,&quot;type&quot;:&quot;string&quot;,&quot;label&quot;:&quot;Node 6 · sublabel&quot;,&quot;default&quot;:&quot;&quot;},
+    {&quot;id&quot;:&quot;n6Lang&quot;,&quot;type&quot;:&quot;enum&quot;,&quot;label&quot;:&quot;Node 6 · LABEL_LANG&quot;,&quot;default&quot;:&quot;ar&quot;,&quot;options&quot;:[{&quot;value&quot;:&quot;ar&quot;,&quot;label&quot;:&quot;ar&quot;},{&quot;value&quot;:&quot;en&quot;,&quot;label&quot;:&quot;en&quot;}]}
+  ]">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1080, height=1920" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
     <title>Hub Diagram</title>
     <script src="assets/vendor/gsap.min.js"></script>
     <style>
@@ -137,13 +134,13 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="hub-diagram" data-start="0" data-duration="5" data-width="1080" data-height="1920">
-      <div id="ground"></div>
-      <div id="key"></div>
-      <div id="sheet" data-layout-allow-overflow="true">
-        <img id="paper" src="assets/paper.webp" alt="" />
-        <div id="dg">
-          <svg id="links" viewBox="0 0 1 1"></svg>
+    <div data-hf-id="hf-bbqt" id="root" data-composition-id="hub-diagram" data-start="0" data-duration="5" data-width="1080" data-height="1920">
+      <div data-hf-id="hf-7hg0" id="ground"></div>
+      <div data-hf-id="hf-nnoy" id="key"></div>
+      <div data-hf-id="hf-0tzx" id="sheet" data-layout-allow-overflow="true">
+        <img data-hf-id="hf-p4aw" id="paper" src="assets/paper.webp" alt="">
+        <div data-hf-id="hf-zqzy" id="dg">
+          <svg data-hf-id="hf-vs1c" id="links" viewBox="0 0 1 1" />
         </div>
       </div>
     </div>
