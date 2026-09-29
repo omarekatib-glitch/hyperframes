@@ -1,0 +1,556 @@
+<!doctype html>
+<html
+  lang="ar"
+  data-composition-variables='[
+    {"id":"bgMode","type":"enum","label":"BG_MODE","default":"paper","options":[{"value":"paper","label":"Paper (wrinkled cream on charcoal)"},{"value":"green","label":"Green (flat #00FF00 for Ultra Key)"}]},
+    {"id":"layout","type":"enum","label":"LAYOUT","default":"list","options":[{"value":"tree","label":"Tree"},{"value":"list","label":"List"},{"value":"flow","label":"Flow"}]},
+    {"id":"revealedCount","type":"number","label":"REVEALED_COUNT","default":3,"min":1,"max":6,"step":1},
+    {"id":"activeNode","type":"string","label":"ACTIVE_NODE (node id)","default":"gm","placeholder":"rev"},
+    {"id":"startTime","type":"number","label":"START_TIME","default":0,"min":0,"max":30,"step":0.1,"unit":"s"},
+    {"id":"duration","type":"number","label":"DURATION","default":5,"min":2,"max":12,"step":0.1,"unit":"s"},
+    {"id":"xPct","type":"number","label":"POSITION x_pct","default":50,"min":0,"max":100,"step":1,"unit":"%"},
+    {"id":"yPct","type":"number","label":"POSITION y_pct","default":50,"min":0,"max":100,"step":1,"unit":"%"},
+    {"id":"scale","type":"number","label":"SCALE","default":1,"min":0.4,"max":1.6,"step":0.05},
+    {"id":"nodeStagger","type":"number","label":"NODE_STAGGER","default":0.4,"min":0.1,"max":2,"step":0.05,"unit":"s"},
+    {"id":"nodeBuildTime","type":"number","label":"NODE_BUILD_TIME","default":0.5,"min":0.2,"max":1.5,"step":0.05,"unit":"s"},
+    {"id":"connectorTime","type":"number","label":"CONNECTOR_TIME","default":0.4,"min":0.1,"max":1.5,"step":0.05,"unit":"s"},
+    {"id":"labelFontSize","type":"number","label":"LABEL_FONT_SIZE_PX","default":54,"min":24,"max":96,"step":1,"unit":"px"},
+    {"id":"enter","type":"enum","label":"ENTER","default":"drop","options":[{"value":"drop","label":"Drop"},{"value":"slide-left","label":"Slide (from left)"},{"value":"push-in","label":"Push-in"}]},
+    {"id":"exit","type":"enum","label":"EXIT","default":"slide-off","options":[{"value":"slide-off","label":"Slide off"},{"value":"fade","label":"Fade"}]},
+    {"id":"nodesJson","type":"string","label":"NODES as JSON (optional, overrides the six node slots)","default":"","placeholder":"[{\"id\":\"rev\",\"label\":\"الـ Revenue\",\"lang\":\"ar\"}]"},
+    {"id":"n1Id","type":"string","label":"Node 1 · id","default":"rev"},
+    {"id":"n1Label","type":"string","label":"Node 1 · label","default":"الـ Revenue"},
+    {"id":"n1Sublabel","type":"string","label":"Node 1 · sublabel","default":""},
+    {"id":"n1Lang","type":"enum","label":"Node 1 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
+    {"id":"n2Id","type":"string","label":"Node 2 · id","default":"cogs"},
+    {"id":"n2Label","type":"string","label":"Node 2 · label","default":"الـ COGS"},
+    {"id":"n2Sublabel","type":"string","label":"Node 2 · sublabel","default":""},
+    {"id":"n2Lang","type":"enum","label":"Node 2 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
+    {"id":"n3Id","type":"string","label":"Node 3 · id","default":"gm"},
+    {"id":"n3Label","type":"string","label":"Node 3 · label","default":"الـ Gross Margin"},
+    {"id":"n3Sublabel","type":"string","label":"Node 3 · sublabel","default":""},
+    {"id":"n3Lang","type":"enum","label":"Node 3 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
+    {"id":"n4Id","type":"string","label":"Node 4 · id","default":"np"},
+    {"id":"n4Label","type":"string","label":"Node 4 · label","default":"الـ Net Profit"},
+    {"id":"n4Sublabel","type":"string","label":"Node 4 · sublabel","default":""},
+    {"id":"n4Lang","type":"enum","label":"Node 4 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
+    {"id":"n5Id","type":"string","label":"Node 5 · id","default":""},
+    {"id":"n5Label","type":"string","label":"Node 5 · label","default":""},
+    {"id":"n5Sublabel","type":"string","label":"Node 5 · sublabel","default":""},
+    {"id":"n5Lang","type":"enum","label":"Node 5 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]},
+    {"id":"n6Id","type":"string","label":"Node 6 · id","default":""},
+    {"id":"n6Label","type":"string","label":"Node 6 · label","default":""},
+    {"id":"n6Sublabel","type":"string","label":"Node 6 · sublabel","default":""},
+    {"id":"n6Lang","type":"enum","label":"Node 6 · LABEL_LANG","default":"ar","options":[{"value":"ar","label":"ar"},{"value":"en","label":"en"}]}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Hub Diagram</title>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      /* Fonts: Cairo (Arabic) + Montserrat (English terms, numbers). Shipped locally, no network at render. */
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 400;
+        src: url("assets/fonts/cairo-arabic-400-normal.woff2") format("woff2");
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 400;
+        src: url("assets/fonts/cairo-latin-400-normal.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 700;
+        src: url("assets/fonts/cairo-arabic-700-normal.woff2") format("woff2");
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 700;
+        src: url("assets/fonts/cairo-latin-700-normal.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-weight: 600;
+        src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-weight: 800;
+        src: url("assets/fonts/montserrat-latin-800-normal.woff2") format("woff2");
+      }
+
+      /* THE palette. Nothing else is used anywhere. --key is the Ultra Key background only (BG_MODE "green"). */
+      :root {
+        --charcoal: #2c2c2c;
+        --cream: #f5f0e8;
+        --blue: #1d6fa4;
+        --brass: #c9a04a;
+        --key: #00ff00;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      #ground, #key { position: absolute; inset: 0; }
+      #ground { background: var(--charcoal); }
+      #key { background: var(--key); }
+
+      #sheet { position: absolute; inset: 0; }
+      #paper { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+      #dg { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+
+      .node { position: absolute; display: flex; align-items: center; justify-content: center; }
+      .plate { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+      .plate .shadow { fill: var(--charcoal); filter: blur(9px); opacity: 0; }
+      .plate .fill { fill: var(--cream); opacity: 0; }
+      .plate .fillActive { fill: var(--blue); opacity: 0; }
+      .plate .ol { fill: none; stroke: var(--charcoal); stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+      .conn { fill: none; stroke: var(--blue); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+      #links { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; }
+
+      .txt { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+      .label, .sub { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 0.28em; color: var(--charcoal); letter-spacing: 0; }
+      .label { font-family: "Cairo", sans-serif; font-weight: 700; line-height: 1.32; }
+      .sub { font-family: "Cairo", sans-serif; font-weight: 400; line-height: 1.3; }
+      .ar { font-family: "Cairo", sans-serif; }
+      .chip {
+        display: inline-block; direction: ltr; white-space: nowrap;
+        background: var(--blue); color: var(--cream);
+        font-family: "Montserrat", sans-serif; font-weight: 800; line-height: 1.2;
+        padding: 0.08em 0.42em 0.1em; border-radius: 0.16em;
+        outline: 3px solid rgba(245, 240, 232, 0);
+      }
+      .sub .chip { font-weight: 600; }
+      .num {
+        display: inline-block; direction: ltr; white-space: nowrap; color: inherit;
+        font-family: "Montserrat", sans-serif; font-weight: 800; line-height: 1.1;
+        border-bottom: 0.12em solid var(--brass);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="hub-diagram" data-start="0" data-duration="5" data-width="1080" data-height="1920">
+      <div id="ground"></div>
+      <div id="key"></div>
+      <div id="sheet" data-layout-allow-overflow="true">
+        <img id="paper" src="assets/paper.webp" alt="" />
+        <div id="dg">
+          <svg id="links" viewBox="0 0 1 1"></svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (async () => {
+        /* =====================================================================
+           EDITABLE CONSTANTS — hub-diagram
+           Every value below comes from a composition variable (Studio's variables panel,
+           `hyperframes render --variables '{...}'`, or the defaults declared on <html>).
+           ===================================================================== */
+        const V = window.__hyperframes.getVariables();
+
+        const num = (v, d) => (Number.isFinite(Number(v)) && v !== "" && v !== null ? Number(v) : d);
+        const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+        const hasArabic = (s) => /[؀-ۿ]/.test(s);
+
+        // NODES: up to 6 of {id, label, sublabel?, lang}. `nodesJson` (an array) wins over the six slots.
+        const fromSlots = [1, 2, 3, 4, 5, 6].map((i) => ({
+          id: String(V["n" + i + "Id"] || ""),
+          label: String(V["n" + i + "Label"] || ""),
+          sublabel: String(V["n" + i + "Sublabel"] || ""),
+          lang: V["n" + i + "Lang"],
+        }));
+        let rawNodes = fromSlots;
+        if (typeof V.nodesJson === "string" && V.nodesJson.trim()) {
+          try {
+            const parsed = JSON.parse(V.nodesJson);
+            if (Array.isArray(parsed)) rawNodes = parsed;
+          } catch (e) {
+            console.warn("[hub-diagram] nodesJson is not valid JSON; using the six node slots");
+          }
+        }
+        const NODES = rawNodes
+          .filter((n) => n && String(n.label || "").trim())
+          .slice(0, 6)
+          .map((n, i) => ({
+            id: String(n.id || "node" + (i + 1)),
+            label: String(n.label).trim(),
+            sublabel: String(n.sublabel || "").trim(),
+            lang: n.lang === "en" || n.lang === "ar" ? n.lang : hasArabic(String(n.label)) ? "ar" : "en",
+          }));
+
+        const CONFIG = {
+          BG_MODE: V.bgMode === "green" ? "green" : "paper",            // "paper" | "green"
+          LAYOUT: ["tree", "list", "flow"].includes(V.layout) ? V.layout : "list", // "tree" | "list" | "flow"
+          NODES,
+          REVEALED_COUNT: clamp(Math.round(num(V.revealedCount, 3)), 1, Math.max(1, NODES.length)),
+          ACTIVE_NODE: String(V.activeNode || ""),
+          START_TIME: Math.max(0, num(V.startTime, 0)),                  // s
+          DURATION: Math.max(2, num(V.duration, 5)),                     // s
+          POSITION: { x_pct: num(V.xPct, 50), y_pct: num(V.yPct, 50) },  // diagram centre
+          SCALE: num(V.scale, 1),
+          NODE_STAGGER: Math.max(0.05, num(V.nodeStagger, 0.4)),         // s
+          NODE_BUILD_TIME: Math.max(0.1, num(V.nodeBuildTime, 0.5)),     // s
+          CONNECTOR_TIME: Math.max(0.1, num(V.connectorTime, 0.4)),      // s
+          LABEL_FONT_SIZE_PX: num(V.labelFontSize, 54),
+          ENTER: ["drop", "slide-left", "push-in"].includes(V.enter) ? V.enter : "drop",
+          EXIT: V.exit === "fade" ? "fade" : "slide-off",
+        };
+        // Fixed choreography beats from the spec.
+        const ENTER_TIME = 0.5, EXIT_TIME = 0.6, PULSE_TIME = 0.3, SWITCH_TIME = 0.12;
+
+        /* ---------------------------------------------------------------------
+           Palette (single source: the CSS custom properties above)
+           --------------------------------------------------------------------- */
+        const cssv = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+        const PALETTE = { charcoal: cssv("--charcoal"), cream: cssv("--cream"), blue: cssv("--blue") };
+        const hexA = (hex, a) => {
+          const n = parseInt(hex.slice(1), 16);
+          return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+        };
+
+        const W = 1080, H = 1920;
+        const isPaper = CONFIG.BG_MODE === "paper";
+        const root = document.getElementById("root");
+        const sheet = document.getElementById("sheet");
+        const dg = document.getElementById("dg");
+        const links = document.getElementById("links");
+        const SVGNS = "http://www.w3.org/2000/svg";
+
+        // Background mode
+        document.getElementById("ground").style.display = isPaper ? "block" : "none";
+        document.getElementById("key").style.display = isPaper ? "none" : "block";
+        document.getElementById("paper").style.display = isPaper ? "block" : "none";
+
+        await Promise.all([
+          document.fonts.load("700 40px Cairo", "ابت الـ"),
+          document.fonts.load("400 30px Cairo", "ابت الـ"),
+          document.fonts.load("800 40px Montserrat", "Ab12"),
+          document.fonts.load("600 30px Montserrat", "Ab12"),
+        ]);
+        await document.fonts.ready;
+        try { await document.getElementById("paper").decode(); } catch (e) { /* paper optional in green mode */ }
+
+        /* ---------------------------------------------------------------------
+           Seeded hand-drawn geometry (deterministic)
+           --------------------------------------------------------------------- */
+        const rng = (seed) => {
+          let a = seed >>> 0;
+          return () => {
+            a = (a + 0x6d2b79f5) >>> 0;
+            let t = a;
+            t = Math.imul(t ^ (t >>> 15), t | 1);
+            t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        };
+        const f1 = (v) => v.toFixed(1);
+        // Catmull-Rom through points -> cubic Béziers
+        function spline(P, closed) {
+          const n = P.length;
+          const at = (i) => (closed ? P[(i + n) % n] : P[clamp(i, 0, n - 1)]);
+          let d = "M" + f1(P[0][0]) + "," + f1(P[0][1]);
+          const segs = closed ? n : n - 1;
+          for (let i = 0; i < segs; i++) {
+            const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
+            d += "C" + f1(p1[0] + (p2[0] - p0[0]) / 6) + "," + f1(p1[1] + (p2[1] - p0[1]) / 6) + " " +
+              f1(p2[0] - (p3[0] - p1[0]) / 6) + "," + f1(p2[1] - (p3[1] - p1[1]) / 6) + " " + f1(p2[0]) + "," + f1(p2[1]);
+          }
+          return d + (closed ? "Z" : "");
+        }
+        // Wobbly rounded-rect outline points, clockwise from the top edge
+        function roughRectPoints(w, h, rad, seed, amp) {
+          const R = rng(seed), pts = [];
+          const j = () => (R() - 0.5) * amp * 2;
+          const side = (ax, ay, bx, by) => {
+            const len = Math.hypot(bx - ax, by - ay), n = Math.max(2, Math.round(len / 70));
+            for (let i = 0; i < n; i++) { const t = i / n; pts.push([ax + (bx - ax) * t + j(), ay + (by - ay) * t + j()]); }
+          };
+          const c = rad * 0.29;
+          side(rad, 0, w - rad, 0); pts.push([w - c + j(), c + j()]);
+          side(w, rad, w, h - rad); pts.push([w - c + j(), h - c + j()]);
+          side(w - rad, h, rad, h); pts.push([c + j(), h - c + j()]);
+          side(0, h - rad, 0, rad); pts.push([c + j(), c + j()]);
+          return pts;
+        }
+        // Hand-drawn polyline: light jitter, exact corners, then smoothed; arrowhead as extra sub-strokes.
+        function roughLine(points, seed) {
+          const R = rng(seed);
+          let d = "";
+          // each segment is its own smoothed subpath so elbow corners stay crisp (no spline overshoot loops)
+          for (let s = 0; s < points.length - 1; s++) {
+            const [ax, ay] = points[s], [bx, by] = points[s + 1];
+            const len = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.round(len / 60));
+            const nx = -(by - ay) / len, ny = (bx - ax) / len;
+            const seg = [[ax, ay]];
+            for (let i = 1; i <= n; i++) {
+              const t = i / n, e = i === n ? 0 : (R() - 0.5) * 3.2;
+              seg.push([ax + (bx - ax) * t + nx * e, ay + (by - ay) * t + ny * e]);
+            }
+            d += spline(seg, false);
+          }
+          const [tx, ty] = points[points.length - 1], [px, py] = points[points.length - 2];
+          const L = Math.hypot(tx - px, ty - py), ux = (tx - px) / L, uy = (ty - py) / L, vx = -uy, vy = ux;
+          const a = 24, b = 14, r1 = (R() - 0.5) * 3, r2 = (R() - 0.5) * 3;
+          d += "M" + f1(tx - ux * a + vx * (b + r1)) + "," + f1(ty - uy * a + vy * (b + r1)) +
+            "L" + f1(tx) + "," + f1(ty) +
+            "L" + f1(tx - ux * a - vx * (b + r2)) + "," + f1(ty - uy * a - vy * (b + r2));
+          return d;
+        }
+
+        /* ---------------------------------------------------------------------
+           Layout: computed for ALL nodes so positions never move between sections
+           --------------------------------------------------------------------- */
+        const N = NODES.length;
+        const LAY = { list: { w: 800, h: 190 }, flow: { w: 410, h: 200 }, tree: { w: 280, h: 190 } }[CONFIG.LAYOUT];
+        const pos = []; // {x,y} centres
+        const parent = []; // parent index per node (-1 root)
+        if (CONFIG.LAYOUT === "list") {
+          for (let i = 0; i < N; i++) { pos.push({ x: 0, y: i * (LAY.h + 90) }); parent.push(i - 1); }
+        } else if (CONFIG.LAYOUT === "flow") {
+          const rtl = NODES[0] && NODES[0].lang === "ar"; // Arabic reads right -> left
+          const dx = (LAY.w + 100) / 2;
+          for (let i = 0; i < N; i++) {
+            const row = Math.floor(i / 2), first = i % 2 === 0;
+            const rightCol = rtl ? (row % 2 === 0 ? first : !first) : (row % 2 === 0 ? !first : first);
+            pos.push({ x: rightCol ? dx : -dx, y: row * (LAY.h + 100) }); parent.push(i - 1);
+          }
+        } else {
+          // tree: heap order (children of i are 2i+1, 2i+2); leaves take left-to-right slots
+          const kids = (i) => [2 * i + 1, 2 * i + 2].filter((c) => c < N);
+          const xs = []; let slot = 0;
+          const place = (i) => {
+            const ks = kids(i);
+            if (!ks.length) xs[i] = slot++ * (LAY.w + 34);
+            else { ks.forEach(place); xs[i] = ks.reduce((s, c) => s + xs[c], 0) / ks.length; }
+          };
+          if (N) place(0);
+          for (let i = 0; i < N; i++) { pos.push({ x: xs[i], y: Math.floor(Math.log2(i + 1)) * (LAY.h + 130) }); parent.push(i === 0 ? -1 : Math.floor((i - 1) / 2)); }
+        }
+        // centre the whole bounding box on (0,0)
+        if (N) {
+          const minX = Math.min(...pos.map((p) => p.x)), maxX = Math.max(...pos.map((p) => p.x));
+          const minY = Math.min(...pos.map((p) => p.y)), maxY = Math.max(...pos.map((p) => p.y));
+          const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+          pos.forEach((p) => { p.x -= cx; p.y -= cy; });
+        }
+        gsap.set(dg, { x: (W * CONFIG.POSITION.x_pct) / 100, y: (H * CONFIG.POSITION.y_pct) / 100, scale: CONFIG.SCALE });
+
+        /* ---------------------------------------------------------------------
+           Labels: Arabic runs in Cairo; English terms as blue-fill boxes with cream Montserrat.
+           Reveal is a stepped clip (never per-letter spans) so Arabic shaping stays connected.
+           --------------------------------------------------------------------- */
+        const LATIN = /[A-Za-z0-9$%][A-Za-z0-9$%&.,\/+'\- ]*/g;
+        const NUMERIC = /^[\d$%.,\s]+(?:\s?(?:EGP|USD|CAD|K|M|B))?$/i;
+        function fillRuns(el, text, size) {
+          el.textContent = "";
+          let last = 0;
+          const push = (cls, s) => {
+            const t = s.trim();
+            if (!t) return;
+            const span = document.createElement("span");
+            span.className = cls;
+            span.textContent = t;
+            el.appendChild(span);
+          };
+          for (const m of text.matchAll(LATIN)) {
+            push("ar", text.slice(last, m.index));
+            const term = m[0].trim();
+            push(NUMERIC.test(term) ? "num" : "chip", term);
+            last = m.index + m[0].length;
+          }
+          push("ar", text.slice(last));
+          el.style.fontSize = size + "px";
+          el.querySelectorAll(".chip, .num").forEach((c) => (c.style.fontSize = size * 0.84 + "px"));
+        }
+
+        /* ---------------------------------------------------------------------
+           Build the revealed nodes and connectors
+           --------------------------------------------------------------------- */
+        const built = []; // per revealed node
+        for (let i = 0; i < CONFIG.REVEALED_COUNT; i++) {
+          const n = NODES[i], p = pos[i];
+          const el = document.createElement("div");
+          el.className = "node";
+          el.id = "hub-node-" + i;
+          Object.assign(el.style, { left: p.x - LAY.w / 2 + "px", top: p.y - LAY.h / 2 + "px", width: LAY.w + "px", height: LAY.h + "px" });
+
+          const svg = document.createElementNS(SVGNS, "svg");
+          svg.setAttribute("class", "plate");
+          svg.setAttribute("viewBox", "0 0 " + LAY.w + " " + LAY.h);
+          const mk = (cls, d, extra) => {
+            const path = document.createElementNS(SVGNS, "path");
+            path.setAttribute("class", cls);
+            path.setAttribute("d", d);
+            if (extra) Object.entries(extra).forEach(([k, v]) => path.setAttribute(k, v));
+            svg.appendChild(path);
+            return path;
+          };
+          const base = roughRectPoints(LAY.w, LAY.h, 20, 1000 + i * 17, 2.2);
+          const closed = spline(base, true);
+          let shadow = null;
+          if (isPaper) { shadow = mk("shadow", closed); shadow.setAttribute("transform", "translate(0,11)"); }
+          const fill = mk("fill", closed);
+          const fillActive = mk("fillActive", closed);
+          const over = (pts, k) => spline([...pts, pts[0].map((v) => v + k), pts[1].map((v) => v - k)], false); // pen overshoot at the close
+          const ol1 = mk("ol", over(base, 2.5), { pathLength: 1, "stroke-width": 3.6 });
+          const ol2 = mk("ol", over(roughRectPoints(LAY.w, LAY.h, 20, 2000 + i * 31, 3.2), -3), { pathLength: 1, "stroke-width": 1.8 });
+          ol2.style.opacity = 0.55;
+          el.appendChild(svg);
+
+          const txt = document.createElement("div");
+          txt.className = "txt";
+          const label = document.createElement("div");
+          label.className = "label";
+          label.dir = n.lang === "ar" ? "rtl" : "ltr";
+          txt.appendChild(label);
+          let sub = null;
+          if (n.sublabel) {
+            sub = document.createElement("div");
+            sub.className = "sub";
+            sub.dir = label.dir;
+            txt.appendChild(sub);
+          }
+          el.appendChild(txt);
+          dg.appendChild(el);
+
+          // fit: shrink until label (+ sublabel) sits inside the plate
+          const availW = LAY.w - 56, availH = LAY.h - 30;
+          txt.style.width = availW + "px";
+          let size = CONFIG.LABEL_FONT_SIZE_PX;
+          for (;;) {
+            fillRuns(label, n.label, size);
+            if (sub) fillRuns(sub, n.sublabel, Math.round(size * 0.52));
+            const tooWide = [...txt.querySelectorAll(".chip, .num")].some((c) => c.getBoundingClientRect().width > availW * CONFIG.SCALE);
+            if (!(tooWide || txt.offsetHeight > availH) || size <= 26) break;
+            size -= 2;
+          }
+          built.push({ i, n, el, fill, fillActive, ol1, ol2, shadow, label, sub, txt, chars: n.label.length });
+        }
+
+        // Connectors (parent -> child), blue, hand-drawn. One <svg id="links"> in diagram space.
+        const conns = [];
+        for (let i = 1; i < CONFIG.REVEALED_COUNT; i++) {
+          const pi = parent[i], a = pos[pi], b = pos[i], gap = 8;
+          let pts;
+          if (CONFIG.LAYOUT === "tree") {
+            const y0 = a.y + LAY.h / 2 + gap, y1 = b.y - LAY.h / 2 - gap, mid = (y0 + y1) / 2;
+            pts = a.x === b.x ? [[a.x, y0], [b.x, y1]] : [[a.x, y0], [a.x, mid], [b.x, mid], [b.x, y1]];
+          } else if (a.x === b.x) {
+            pts = [[a.x, a.y + LAY.h / 2 + gap], [b.x, b.y - LAY.h / 2 - gap]];
+          } else {
+            const dir = Math.sign(b.x - a.x);
+            pts = [[a.x + (dir * LAY.w) / 2 + dir * gap, a.y], [b.x - (dir * LAY.w) / 2 - dir * gap, b.y]];
+          }
+          const path = document.createElementNS(SVGNS, "path");
+          path.setAttribute("class", "conn");
+          path.setAttribute("pathLength", "1");
+          path.setAttribute("d", roughLine(pts, 3000 + i * 13));
+          links.appendChild(path);
+          conns.push({ i, parentIdx: pi, path });
+        }
+
+        /* ---------------------------------------------------------------------
+           Timeline
+           --------------------------------------------------------------------- */
+        const tl = gsap.timeline({ paused: true });
+        // Render length is the root's static data-duration (fixed at compile time); DURATION shapes the choreography inside it.
+        const ROOT_DUR = num(root.getAttribute("data-duration"), 5);
+        const S = Math.min(CONFIG.START_TIME, Math.max(0, ROOT_DUR - 2));
+        const D = Math.min(CONFIG.DURATION, ROOT_DUR - S);
+        if (D < CONFIG.DURATION || S < CONFIG.START_TIME) console.warn("[hub-diagram] START_TIME + DURATION exceed the root data-duration (" + ROOT_DUR + "s); clamped. Change data-duration on #root to render longer.");
+        const EXIT_T = Math.min(EXIT_TIME, D * 0.25);
+        const END = S + D, exitAt = END - EXIT_T;
+        const R = CONFIG.REVEALED_COUNT;
+
+        // Schedule (compressed only if the requested timings cannot fit inside DURATION)
+        const plan = (k) => {
+          const B = CONFIG.NODE_BUILD_TIME * k, ST = CONFIG.NODE_STAGGER * k, CT = CONFIG.CONNECTOR_TIME * k;
+          const starts = built.map((b) => S + ENTER_TIME + b.i * ST);
+          const cStart = {}, cEnd = {};
+          conns.forEach((c) => { cStart[c.i] = Math.max(starts[c.parentIdx] + B * 0.5, starts[c.i] - CT * 0.5); cEnd[c.i] = cStart[c.i] + CT; });
+          const done = Math.max(...starts.map((s) => s + B), ...Object.values(cEnd), S + ENTER_TIME);
+          const pulseAt = done + 0.1;
+          return { B, ST, CT, starts, cStart, pulseAt, switchEnd: pulseAt + PULSE_TIME + SWITCH_TIME };
+        };
+        let k = 1, P = plan(k);
+        for (let it = 0; it < 12 && P.switchEnd > exitAt - 0.2; it++) { k *= 0.85; P = plan(k); }
+        if (k < 1) console.warn("[hub-diagram] timings compressed x" + k.toFixed(2) + " to fit DURATION " + D + "s");
+
+        // 0.0s — paper (or, in green mode, the diagram sheet) ENTERS; never a hard cut
+        const ENTER_FROM = {
+          drop: { y: -2100, rotation: -3, opacity: 1, scale: 1, x: 0 },
+          "slide-left": { x: -1250, rotation: -1.2, opacity: 1, scale: 1, y: 0 },
+          "push-in": { scale: 0.86, opacity: 0, x: 0, y: 0, rotation: 0 },
+        }[CONFIG.ENTER];
+        tl.fromTo(sheet, ENTER_FROM, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, duration: ENTER_TIME, ease: "power3.out" }, S);
+        if (isPaper) tl.fromTo("#ground", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "none" }, S);
+        tl.addLabel("sfx:paper-rustle", S);
+
+        // nodes + connectors build one by one
+        built.forEach((b) => {
+          const t = P.starts[b.i], B = P.B;
+          tl.fromTo(b.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01 }, t);
+          tl.fromTo(b.ol1, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: B * 0.5, ease: "power1.inOut" }, t);
+          tl.fromTo(b.ol2, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: B * 0.55, ease: "power1.inOut" }, t + B * 0.06);
+          tl.fromTo(b.fill, { opacity: 0 }, { opacity: 1, duration: B * 0.3, ease: "power1.out" }, t + B * 0.4);
+          if (b.shadow) tl.fromTo(b.shadow, { opacity: 0 }, { opacity: 0.34, duration: B * 0.3, ease: "power1.out" }, t + B * 0.4);
+          // label types on: stepped wipe from the reading-start edge
+          const rtl = b.label.dir === "rtl";
+          const hidden = rtl ? "inset(-20% -5% -20% 105%)" : "inset(-20% 105% -20% -5%)";
+          tl.fromTo(b.label, { clipPath: hidden }, { clipPath: "inset(-20% -5% -20% -5%)", duration: B * 0.42, ease: "steps(" + Math.max(2, b.chars) + ")" }, t + B * 0.58);
+          if (b.sub) tl.fromTo(b.sub, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: B * 0.3, ease: "power2.out" }, t + B * 0.78);
+        });
+        conns.forEach((c) => {
+          tl.fromTo(c.path, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: P.CT, ease: "power1.inOut" }, P.cStart[c.i]);
+        });
+
+        // ACTIVE_NODE: pulse 1.0 -> 1.08 -> 1.0 (0.3s), then switch to Electric Blue fill + cream text
+        let active = built.find((b) => b.n.id === CONFIG.ACTIVE_NODE);
+        if (!active) {
+          active = built[built.length - 1];
+          console.warn('[hub-diagram] ACTIVE_NODE "' + CONFIG.ACTIVE_NODE + '" is not among the revealed nodes; highlighting the last revealed node');
+        }
+        const pa = P.pulseAt, sw = pa + PULSE_TIME;
+        tl.set(active.el, { zIndex: 5 }, pa);
+        tl.fromTo(active.el, { scale: 1 }, { scale: 1.08, duration: PULSE_TIME / 2, ease: "power2.out", transformOrigin: "50% 50%" }, pa);
+        tl.to(active.el, { scale: 1, duration: PULSE_TIME / 2, ease: "power2.in" }, pa + PULSE_TIME / 2);
+        tl.fromTo(active.fillActive, { opacity: 0 }, { opacity: 1, duration: SWITCH_TIME, ease: "none" }, sw);
+        const ink = [active.label, active.sub].filter(Boolean);
+        tl.fromTo(ink, { color: PALETTE.charcoal }, { color: PALETTE.cream, duration: SWITCH_TIME, ease: "none" }, sw);
+        tl.fromTo(active.el.querySelectorAll(".chip"), { outlineColor: hexA(PALETTE.cream, 0) }, { outlineColor: hexA(PALETTE.cream, 1), duration: SWITCH_TIME, ease: "none" }, sw);
+        tl.addLabel("sfx:click", sw);
+
+        // Final 0.6s — exit
+        const outTo = { drop: { y: 2100, rotation: 2.5 }, "slide-left": { x: 1250, rotation: 1.2 }, "push-in": { y: 2100, rotation: 1.5 } }[CONFIG.ENTER];
+        if (CONFIG.EXIT === "fade") {
+          tl.fromTo(sheet, { opacity: 1 }, { opacity: 0, duration: EXIT_T, ease: "power1.inOut" }, exitAt);
+        } else {
+          tl.fromTo(sheet, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 }, { ...outTo, duration: EXIT_T, ease: "power3.in" }, exitAt);
+        }
+        if (isPaper) tl.fromTo("#ground", { opacity: 1 }, { opacity: 0, duration: Math.min(0.3, EXIT_T), ease: "none" }, END - Math.min(0.3, EXIT_T));
+
+        // SFX = named markers only (no audio in this template). Max one per second, always under the voice.
+        const markers = [{ name: "paper-rustle", time: S }, { name: "click", time: sw }];
+        if (markers[1].time - markers[0].time < 1) console.warn("[hub-diagram] SFX markers closer than 1s");
+        window.__sfxMarkers = markers;
+        const mj = document.createElement("script");
+        mj.type = "application/json";
+        mj.id = "sfx-markers";
+        mj.textContent = JSON.stringify(markers);
+        root.appendChild(mj);
+
+        tl.seek(0);
+        window.__timelines["hub-diagram"] = tl;
+      })();
+    </script>
+  </body>
+</html>
