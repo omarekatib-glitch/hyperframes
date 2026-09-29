@@ -1,0 +1,856 @@
+<!doctype html>
+<!--
+  sketch-chart — بيزنس مفهوم | عمر طه
+  Reusable chart overlay: CHART_TYPE line | bar, STYLE sketch | clean, BG_MODE paper | green.
+
+  Every editable value is declared in data-composition-variables on <html> (Studio variables panel,
+  `--variables` at render time) and mirrored as a constant at the top of the script below.
+  The variable declaration defaults are the source of truth; the constants only fall back when
+  a variable is missing.
+
+  DATA INTEGRITY — REPLACE WITH SOURCED DATA. The default series (Y1:10 … Y4:35) is an
+  illustrative placeholder, not a real figure.
+-->
+<html
+  lang="ar"
+  data-composition-variables='[
+    {"id":"bgMode","type":"enum","label":"Background mode","default":"paper","options":[{"value":"paper","label":"Paper (full-frame wrinkled cream)"},{"value":"green","label":"Green (#00FF00 for Ultra Key, cream plate)"}]},
+    {"id":"chartType","type":"enum","label":"Chart type","default":"line","options":[{"value":"line","label":"Line"},{"value":"bar","label":"Bar"}]},
+    {"id":"style","type":"enum","label":"Style","default":"sketch","options":[{"value":"sketch","label":"Sketch (concepts, trends)"},{"value":"clean","label":"Clean (exact values)"}]},
+    {"id":"data","type":"string","label":"DATA — label:value pairs separated by ; (max 8). REPLACE WITH SOURCED DATA","default":"Y1:10;Y2:14;Y3:22;Y4:35","placeholder":"Y1:10;Y2:14;Y3:22;Y4:35"},
+    {"id":"unit","type":"string","label":"UNIT (suffix, e.g. %)","default":"%","maxLength":8},
+    {"id":"prefix","type":"string","label":"PREFIX (e.g. EGP)","default":"","maxLength":8},
+    {"id":"title","type":"string","label":"TITLE","default":"اتجاه الـ Inflation","maxLength":60},
+    {"id":"titleLang","type":"enum","label":"TITLE_LANG","default":"ar","options":[{"value":"ar","label":"Arabic (Cairo Bold, RTL)"},{"value":"en","label":"English (Montserrat SemiBold)"}]},
+    {"id":"highlightIndex","type":"number","label":"HIGHLIGHT_INDEX (0-based, -1 = none)","default":3,"min":-1,"max":7,"step":1},
+    {"id":"valueIsMoney","type":"boolean","label":"VALUE_IS_MONEY (enables the ching marker)","default":false},
+    {"id":"startTime","type":"number","label":"START_TIME (s)","default":0,"min":0,"max":60,"step":0.1,"unit":"s"},
+    {"id":"duration","type":"number","label":"DURATION (s, min 4.5 for the full build)","default":5,"min":3,"max":12,"step":0.1,"unit":"s"},
+    {"id":"posXPct","type":"number","label":"POSITION x_pct","default":50,"min":0,"max":100,"step":1,"unit":"%"},
+    {"id":"posYPct","type":"number","label":"POSITION y_pct","default":50,"min":0,"max":100,"step":1,"unit":"%"},
+    {"id":"scale","type":"number","label":"SCALE","default":1,"min":0.4,"max":1.6,"step":0.05},
+    {"id":"enter","type":"enum","label":"ENTER","default":"drop","options":[{"value":"drop","label":"Drop"},{"value":"slide-left","label":"Slide (in from the left)"},{"value":"push-in","label":"Push-in"}]},
+    {"id":"drawDuration","type":"number","label":"DRAW_DURATION (s)","default":2,"min":0.8,"max":4,"step":0.1,"unit":"s"},
+    {"id":"valueCounter","type":"boolean","label":"VALUE_COUNTER (labels tick up)","default":true},
+    {"id":"backdrop","type":"boolean","label":"Charcoal backdrop behind the paper (turn off when compositing over footage)","default":true}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>sketch-chart</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      /*
+        Brand fonts, shipped locally.
+        Each family pairs the Arabic face with the Latin face through unicode-range, so Arabic
+        text shapes in Cairo and English terms / digits render in Montserrat inside one string.
+      */
+      @font-face {
+        font-family: "BrandTitle";
+        src: url("assets/cairo-arabic-700-normal.woff2") format("woff2");
+        font-weight: 700;
+        font-display: block;
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1,
+          U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74,
+          U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "BrandTitle";
+        src: url("assets/montserrat-latin-600-normal.woff2") format("woff2");
+        font-weight: 700;
+        font-display: block;
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+2000-200B, U+200F, U+2012-204E, U+2050-206F, U+20AC, U+2122, U+2212;
+      }
+      @font-face {
+        font-family: "BrandLabel";
+        src: url("assets/cairo-arabic-400-normal.woff2") format("woff2");
+        font-weight: 400;
+        font-display: block;
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1,
+          U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74,
+          U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "BrandLabel";
+        src: url("assets/montserrat-latin-600-normal.woff2") format("woff2");
+        font-weight: 400;
+        font-display: block;
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+2000-200B, U+200F, U+2012-204E, U+2050-206F, U+20AC, U+2122, U+2212;
+      }
+      @font-face {
+        font-family: "BrandNum";
+        src: url("assets/montserrat-latin-800-normal.woff2") format("woff2");
+        font-weight: 800;
+        font-display: block;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #2c2c2c;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #enter {
+        position: absolute;
+        inset: 0;
+      }
+      #paper {
+        position: absolute;
+        inset: 0;
+        box-shadow: 0 22px 70px rgba(44, 44, 44, 0.55);
+      }
+      #paper svg {
+        display: block;
+      }
+      #chart {
+        position: absolute;
+        width: 960px;
+        height: 1160px;
+      }
+      #plate {
+        position: absolute;
+        inset: 0;
+        border-radius: 48px;
+        background: #f5f0e8;
+      }
+      #gfx {
+        position: absolute;
+        left: 0;
+        top: 0;
+        overflow: visible;
+      }
+      #chart .t {
+        position: absolute;
+        color: #2c2c2c;
+        white-space: nowrap;
+      }
+      #title {
+        position: absolute;
+        left: 50px;
+        width: 860px;
+        top: 50px;
+        text-align: center;
+        font-family: "BrandTitle", sans-serif;
+        font-weight: 700;
+        color: #2c2c2c;
+        line-height: 1.45;
+      }
+      .ylab {
+        font-family: "BrandLabel", sans-serif;
+        font-weight: 400;
+        font-size: 28px;
+        width: 120px;
+        text-align: right;
+        direction: ltr;
+      }
+      .xlab {
+        font-family: "BrandLabel", sans-serif;
+        font-weight: 400;
+        font-size: 30px;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .vlab {
+        font-family: "BrandNum", sans-serif;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        direction: ltr;
+      }
+      .hltag {
+        font-family: "BrandNum", sans-serif;
+        font-weight: 800;
+        font-size: 60px;
+        line-height: 1.25;
+        font-variant-numeric: tabular-nums;
+        direction: ltr;
+        text-align: center;
+        color: #c9a04a;
+        background: #2c2c2c;
+        border-radius: 20px;
+        padding: 8px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="sketch-chart"
+      data-start="0"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="enter">
+        <div id="paper"></div>
+        <div id="chart">
+          <div id="plate"></div>
+          <svg id="gfx" width="960" height="1160" viewBox="0 0 960 1160"></svg>
+          <div id="title"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        // ============================================================================
+        // EDITABLE CONSTANTS — each one is also a Studio variable (see <html> above).
+        // ============================================================================
+        const V =
+          (window.__hyperframes &&
+            window.__hyperframes.getVariables &&
+            window.__hyperframes.getVariables()) ||
+          {};
+        const pick = (k, d) => (V[k] === undefined || V[k] === null ? d : V[k]);
+        const num = (k, d, lo, hi) => {
+          let x = Number(pick(k, d));
+          if (!isFinite(x)) x = d;
+          return Math.min(hi, Math.max(lo, x));
+        };
+        const bool = (k, d) => {
+          const v = pick(k, d);
+          return v === true || v === "true";
+        };
+        const oneOf = (k, d, opts) => {
+          const v = String(pick(k, d));
+          return opts.indexOf(v) >= 0 ? v : d;
+        };
+
+        const BG_MODE = oneOf("bgMode", "paper", ["paper", "green"]);
+        const CHART_TYPE = oneOf("chartType", "line", ["line", "bar"]);
+        const STYLE = oneOf("style", "sketch", ["sketch", "clean"]);
+        // REPLACE WITH SOURCED DATA — illustrative placeholders, not real figures. Up to 8 points.
+        const DATA_DEFAULT = [
+          { label: "Y1", value: 10 },
+          { label: "Y2", value: 14 },
+          { label: "Y3", value: 22 },
+          { label: "Y4", value: 35 },
+        ];
+        const DATA = parseData(pick("data", "")) || DATA_DEFAULT; // REPLACE WITH SOURCED DATA
+        const UNIT = String(pick("unit", "%"));
+        const PREFIX = String(pick("prefix", ""));
+        const TITLE = String(pick("title", "اتجاه الـ Inflation"));
+        const TITLE_LANG = oneOf("titleLang", "ar", ["ar", "en"]);
+        const HIGHLIGHT_INDEX = Math.min(
+          DATA.length - 1,
+          Math.round(num("highlightIndex", 3, -1, 7)),
+        );
+        const VALUE_IS_MONEY = bool("valueIsMoney", false);
+        const START_TIME = num("startTime", 0, 0, 60);
+        const DURATION = num("duration", 5, 3, 12);
+        const POS_X_PCT = num("posXPct", 50, 0, 100);
+        const POS_Y_PCT = num("posYPct", 50, 0, 100);
+        const SCALE = num("scale", 1, 0.4, 1.6);
+        const ENTER = oneOf("enter", "drop", ["drop", "slide-left", "push-in"]);
+        const DRAW_DURATION = num("drawDuration", 2, 0.8, 4);
+        const VALUE_COUNTER = bool("valueCounter", true);
+        const BACKDROP = bool("backdrop", true);
+
+        // ---- fixed brand tokens (no other colours are used anywhere) ----
+        const CHARCOAL = "#2C2C2C";
+        const CREAM = "#F5F0E8";
+        const BLUE = "#1D6FA4";
+        const BRASS = "#C9A04A";
+        const SEED = 20260929;
+
+        function parseData(s) {
+          if (!s) return null;
+          const out = [];
+          String(s)
+            .split(/[;\n]/)
+            .forEach((part) => {
+              const p = part.trim();
+              const i = p.lastIndexOf(":");
+              if (i < 1) return;
+              const label = p.slice(0, i).trim();
+              const value = parseFloat(p.slice(i + 1));
+              if (label && isFinite(value)) out.push({ label, value: Math.max(0, value) });
+            });
+          return out.length >= 2 ? out.slice(0, 8) : null;
+        }
+
+        // ---- seeded randomness: identical on every render ----
+        let _s = SEED >>> 0;
+        function rnd() {
+          _s = (_s + 0x6d2b79f5) >>> 0;
+          let t = _s;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        }
+
+        const NS = "http://www.w3.org/2000/svg";
+        function S(tag, attrs, parent) {
+          const e = document.createElementNS(NS, tag);
+          for (const k in attrs) e.setAttribute(k, attrs[k]);
+          if (parent) parent.appendChild(e);
+          return e;
+        }
+        function H(cls, css, parent, text) {
+          const e = document.createElement("div");
+          e.className = cls;
+          Object.assign(e.style, css);
+          if (text != null) e.textContent = text;
+          parent.appendChild(e);
+          return e;
+        }
+
+        // ---- geometry helpers ----
+        function densify(pts, step) {
+          const out = [pts[0]];
+          for (let i = 1; i < pts.length; i++) {
+            const a = pts[i - 1];
+            const b = pts[i];
+            const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+            const k = Math.max(1, Math.round(len / step));
+            for (let j = 1; j <= k; j++)
+              out.push([a[0] + ((b[0] - a[0]) * j) / k, a[1] + ((b[1] - a[1]) * j) / k]);
+          }
+          return out;
+        }
+        function jitter(pts, amp) {
+          const p1 = rnd() * 6.28;
+          const p2 = rnd() * 6.28;
+          let s = 0;
+          return pts.map((p, i) => {
+            if (i > 0) s += Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]);
+            const a = pts[Math.max(0, i - 1)];
+            const b = pts[Math.min(pts.length - 1, i + 1)];
+            const tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+            const nx = -(b[1] - a[1]) / tl;
+            const ny = (b[0] - a[0]) / tl;
+            const off = amp * (0.6 * Math.sin(s / 38 + p1) + 0.4 * Math.sin(s / 17 + p2));
+            return [p[0] + nx * off, p[1] + ny * off];
+          });
+        }
+        function toD(pts) {
+          return "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L");
+        }
+        function arcFractions(pts) {
+          const cum = [0];
+          for (let i = 1; i < pts.length; i++)
+            cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+          return cum.map((c) => c / cum[cum.length - 1]);
+        }
+        function handCircle(cx, cy, rx, ry) {
+          const th0 = rnd() * 6.28;
+          const ph = rnd() * 6.28;
+          const pts = [];
+          const steps = 40;
+          for (let i = 0; i <= steps; i++) {
+            const f = i / steps;
+            const th = th0 + f * 6.28 * 1.07;
+            const wob = 1 + 0.05 * Math.sin(2 * th + ph) + 0.03 * Math.sin(3 * th + ph * 2);
+            const drift = 1 + 0.06 * f;
+            pts.push([cx + Math.cos(th) * rx * wob * drift, cy + Math.sin(th) * ry * wob * drift]);
+          }
+          return toD(pts);
+        }
+        function niceStep(x) {
+          const p = Math.pow(10, Math.floor(Math.log10(x)));
+          const f = x / p;
+          return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+        }
+
+        // ---- number formatting (Latin digits, tabular) ----
+        const decimals = Math.min(
+          2,
+          Math.max(
+            0,
+            ...DATA.map((d) => {
+              const s = String(d.value);
+              return s.indexOf(".") >= 0 ? s.length - s.indexOf(".") - 1 : 0;
+            }),
+          ),
+        );
+        function fmtNum(v) {
+          return Number(v).toLocaleString("en-US", {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+          });
+        }
+        const prefixStr = PREFIX ? PREFIX + (/[A-Za-z]$/.test(PREFIX) ? " " : "") : "";
+        const unitStr = UNIT ? (/^[A-Za-z]/.test(UNIT) ? " " : "") + UNIT : "";
+        const fmtFull = (v) => prefixStr + fmtNum(v) + unitStr;
+        const fmtAxis = (v) => fmtNum(v) + unitStr;
+
+        // ============================================================================
+        // BACKGROUND MODES
+        // ============================================================================
+        const root = document.getElementById("root");
+        const paperEl = document.getElementById("paper");
+        const plateEl = document.getElementById("plate");
+        const chartEl = document.getElementById("chart");
+        const gfx = document.getElementById("gfx");
+        const enterEl = document.getElementById("enter");
+
+        if (BG_MODE === "green") {
+          root.style.background = "#00FF00"; // flat key colour, used nowhere else
+          paperEl.style.display = "none";
+          plateEl.style.display = "block"; // solid cream rounded plate, no shadow, no blur
+        } else {
+          root.style.background = BACKDROP ? CHARCOAL : "transparent";
+          plateEl.style.display = "none";
+          buildPaper();
+        }
+
+        function buildPaper() {
+          // Crumpled cream sheet: lit turbulence for the relief, then every channel is clamped
+          // to the cream value so no pixel is ever lighter than #F5F0E8 (never white).
+          const clampTable = (c) => {
+            const v = [];
+            for (let i = 0; i <= 20; i++) v.push(Math.min(i / 20, c / 255).toFixed(4));
+            return v.join(" ");
+          };
+          const svg = S(
+            "svg",
+            { width: 1080, height: 1920, viewBox: "0 0 1080 1920" },
+            paperEl,
+          );
+          const defs = S("defs", {}, svg);
+          const f = S(
+            "filter",
+            {
+              id: "crumple",
+              x: 0,
+              y: 0,
+              width: "100%",
+              height: "100%",
+              "color-interpolation-filters": "sRGB",
+            },
+            defs,
+          );
+          S(
+            "feTurbulence",
+            {
+              type: "turbulence",
+              baseFrequency: "0.0022 0.0034",
+              numOctaves: 3,
+              seed: 11,
+              result: "n",
+            },
+            f,
+          );
+          const lit = S(
+            "feDiffuseLighting",
+            {
+              in: "n",
+              surfaceScale: 22,
+              diffuseConstant: 1.064,
+              "lighting-color": CREAM,
+              result: "lit",
+            },
+            f,
+          );
+          S("feDistantLight", { azimuth: 225, elevation: 70 }, lit);
+          const ct = S("feComponentTransfer", { in: "lit" }, f);
+          S("feFuncR", { type: "table", tableValues: clampTable(245) }, ct);
+          S("feFuncG", { type: "table", tableValues: clampTable(240) }, ct);
+          S("feFuncB", { type: "table", tableValues: clampTable(232) }, ct);
+          S("rect", { width: 1080, height: 1920, fill: CREAM, filter: "url(#crumple)" }, svg);
+          // Fold lines: long angular creases with a soft shadow side.
+          const creases = S("g", { "data-layout-allow-overflow": "", fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);
+          for (let i = 0; i < 9; i++) {
+            const horizontal = rnd() < 0.45;
+            let x = horizontal ? -20 : rnd() * 1080;
+            let y = horizontal ? rnd() * 1920 : -20;
+            const pts = [[x, y]];
+            const segs = 3 + Math.floor(rnd() * 3);
+            for (let k = 0; k < segs; k++) {
+              x += horizontal ? 160 + rnd() * 240 : (rnd() - 0.5) * 520;
+              y += horizontal ? (rnd() - 0.5) * 460 : 220 + rnd() * 300;
+              pts.push([x, y]);
+            }
+            const d = toD(pts);
+            S("path", { d, stroke: CHARCOAL, "stroke-opacity": 0.05, "stroke-width": 16 }, creases);
+            S("path", { d, stroke: CHARCOAL, "stroke-opacity": 0.15, "stroke-width": 2 }, creases);
+          }
+        }
+
+        // ============================================================================
+        // CHART LAYOUT
+        // ============================================================================
+        const BOX_W = 960;
+        const BOX_H = 1160;
+        const plot = { l: 150, r: 900, t: 420, b: 1010 };
+        const n = DATA.length;
+        const slot = (plot.r - plot.l) / n;
+        const cx = (i) => plot.l + slot * (i + 0.5);
+        const maxV = Math.max(...DATA.map((d) => d.value), 1);
+        const step = niceStep(maxV / 4);
+        const top = Math.ceil(maxV / step) * step;
+        const yOf = (v) => plot.b - (v / top) * (plot.b - plot.t);
+        const sketch = STYLE === "sketch";
+
+        gsap.set(chartEl, {
+          left: (POS_X_PCT / 100) * 1080 - BOX_W / 2,
+          top: (POS_Y_PCT / 100) * 1920 - BOX_H / 2,
+          scale: SCALE,
+          transformOrigin: "50% 50%",
+        });
+
+        // ---- title ----
+        const titleEl = document.getElementById("title");
+        titleEl.textContent = TITLE;
+        titleEl.setAttribute("dir", TITLE_LANG === "ar" ? "rtl" : "ltr");
+        titleEl.setAttribute("lang", TITLE_LANG);
+        titleEl.style.fontSize = (TITLE.length > 34 ? 50 : TITLE.length > 22 ? 58 : 66) + "px";
+
+        // ---- svg defs: hatch for sketch bars ----
+        const defs = S("defs", {}, gfx);
+        const hatch = S(
+          "pattern",
+          {
+            id: "hatch",
+            patternUnits: "userSpaceOnUse",
+            width: 15,
+            height: 15,
+            patternTransform: "rotate(45)",
+          },
+          defs,
+        );
+        S("line", { x1: 0, y1: 0, x2: 0, y2: 15, stroke: CREAM, "stroke-width": 3 }, hatch);
+
+        const gGrid = S("g", {}, gfx);
+        const gAxes = S("g", {}, gfx);
+        const gData = S("g", {}, gfx);
+        const gTop = S("g", {}, gfx);
+
+        function inkPath(parent, d, color, width) {
+          return S(
+            "path",
+            {
+              d,
+              pathLength: 1,
+              fill: "none",
+              stroke: color,
+              "stroke-width": width,
+              "stroke-linecap": "round",
+              "stroke-linejoin": "round",
+              "stroke-dasharray": "1 1",
+              "stroke-dashoffset": 1,
+              opacity: 0,
+            },
+            parent,
+          );
+        }
+
+        // ---- axes (hand-drawn double pass in sketch, single crisp pass in clean) ----
+        const axisPaths = [];
+        const axes = sketch
+          ? [
+              [
+                [plot.l, plot.t - 34],
+                [plot.l, plot.b + 10],
+              ],
+              [
+                [plot.l - 12, plot.b],
+                [plot.r + 14, plot.b],
+              ],
+            ]
+          : [
+              [
+                [plot.l, plot.t - 20],
+                [plot.l, plot.b],
+              ],
+              [
+                [plot.l, plot.b],
+                [plot.r + 6, plot.b],
+              ],
+            ];
+        axes.forEach((pts) => {
+          const dense = densify(pts, 22);
+          if (sketch) {
+            axisPaths.push(inkPath(gAxes, toD(jitter(dense, 1.8)), CHARCOAL, 5));
+            axisPaths.push(inkPath(gAxes, toD(jitter(dense, 2.2)), CHARCOAL, 2));
+          } else {
+            axisPaths.push(inkPath(gAxes, toD(pts), CHARCOAL, 4));
+          }
+        });
+
+        // ---- grid + y labels ----
+        const gridLines = [];
+        const yLabels = [];
+        for (let v = step; v <= top + 1e-9; v += step) {
+          const y = yOf(v);
+          const pts = sketch ? jitter(densify([[plot.l, y], [plot.r, y]], 22), 1.4) : [[plot.l, y], [plot.r, y]];
+          gridLines.push(
+            S(
+              "path",
+              {
+                d: toD(pts),
+                fill: "none",
+                stroke: CHARCOAL,
+                "stroke-width": sketch ? 2 : 1.5,
+                "stroke-dasharray": sketch ? "12 10" : "4 8",
+                "stroke-linecap": "round",
+                opacity: 0,
+              },
+              gGrid,
+            ),
+          );
+          const el = H("t ylab", { left: plot.l - 22 - 120 + "px", top: y + "px", opacity: 0 }, chartEl, fmtAxis(v));
+          gsap.set(el, { yPercent: -50 });
+          yLabels.push(el);
+        }
+        const zeroEl = H("t ylab", { left: plot.l - 22 - 120 + "px", top: plot.b + "px", opacity: 0 }, chartEl, fmtAxis(0));
+        gsap.set(zeroEl, { yPercent: -50 });
+        yLabels.push(zeroEl);
+
+        // ---- x labels ----
+        const xLabels = DATA.map((d, i) => {
+          const el = H(
+            "t xlab",
+            { left: cx(i) - slot / 2 + "px", top: plot.b + 24 + "px", width: slot + "px", opacity: 0 },
+            chartEl,
+            d.label,
+          );
+          el.setAttribute("dir", "auto");
+          return el;
+        });
+        if (!sketch && CHART_TYPE === "line") {
+          DATA.forEach((d, i) => {
+            gGrid.appendChild(
+              S("line", { x1: cx(i), y1: plot.b, x2: cx(i), y2: plot.b + 10, stroke: CHARCOAL, "stroke-width": 3 }),
+            );
+          });
+        }
+
+        // ---- data marks ----
+        const hi = HIGHLIGHT_INDEX;
+        const valueFs = Math.max(
+          22,
+          Math.min(40, Math.round((slot * 1.02) / (Math.max(...DATA.map((d) => fmtFull(d.value).length)) * 0.72))),
+        );
+        const vLabels = [];
+        let tagEl = null;
+        let circleD = null;
+        let lineInfo = null;
+        let barInfo = [];
+
+        if (CHART_TYPE === "line") {
+          const anchors = DATA.map((d, i) => [cx(i), yOf(d.value)]);
+          const dense = densify(anchors, 14);
+          const wob = sketch ? jitter(dense, 3.0) : dense;
+          // arc fraction at each data anchor (dense index of anchor k)
+          const fr = arcFractions(wob);
+          const anchorFrac = [];
+          let di = 0;
+          anchors.forEach((a, k) => {
+            if (k === 0) {
+              anchorFrac.push(0);
+              return;
+            }
+            const seg = Math.max(
+              1,
+              Math.round(Math.hypot(a[0] - anchors[k - 1][0], a[1] - anchors[k - 1][1]) / 14),
+            );
+            di += seg;
+            anchorFrac.push(fr[Math.min(di, fr.length - 1)]);
+          });
+          const main = inkPath(gData, toD(wob), BLUE, sketch ? 9 : 8);
+          const pencil = sketch ? inkPath(gData, toD(jitter(dense, 3.0).map((p) => [p[0] + 2.5, p[1] + 2.5])), CHARCOAL, 2) : null;
+          const markers = anchors.map((a) => S("circle", { cx: a[0], cy: a[1], r: 0, fill: BLUE, stroke: CHARCOAL, "stroke-width": 3 }, gTop));
+          lineInfo = { main, pencil, markers, anchorFrac, anchors };
+        } else {
+          const barW = Math.min(110, slot * 0.58);
+          DATA.forEach((d, i) => {
+            const x = cx(i) - barW / 2;
+            const h = (d.value / top) * (plot.b - plot.t);
+            const g = S("g", { opacity: 0 }, gData);
+            const rects = [];
+            rects.push({ el: S("rect", { x, y: plot.b, width: barW, height: 0, fill: BLUE }, g), dy: 0 });
+            if (sketch) {
+              rects.push({ el: S("rect", { x, y: plot.b, width: barW, height: 0, fill: "url(#hatch)" }, g), dy: 0 });
+              [3, 2].forEach((w) => {
+                const dx = (rnd() - 0.5) * 6;
+                const dy = (rnd() - 0.5) * 7;
+                rects.push({
+                  el: S(
+                    "rect",
+                    { x: x + dx, y: plot.b, width: barW + (rnd() - 0.5) * 5, height: 0, fill: "none", stroke: CHARCOAL, "stroke-width": w, "stroke-linejoin": "round" },
+                    g,
+                  ),
+                  dy,
+                });
+              });
+            }
+            barInfo.push({ g, rects, top: plot.b - h, h, x, barW });
+          });
+        }
+
+        // value labels (non-highlight) + brass tag (highlight)
+        DATA.forEach((d, i) => {
+          const px = cx(i);
+          const py = CHART_TYPE === "line" ? yOf(d.value) : yOf(d.value);
+          if (i === hi) {
+            const tagText = fmtFull(d.value);
+            const tw = tagText.length * 40 + 52;
+            const half = tw / 2;
+            const ax = Math.max(half + 36, Math.min(BOX_W - half - 36, px));
+            const ry = CHART_TYPE === "line" ? 46 : 58;
+            const rx = CHART_TYPE === "line" ? 46 : barInfo[i].barW / 2 + 26;
+            tagEl = H("t hltag", { left: ax + "px", top: py - ry - 12 + "px", width: tw + "px", opacity: 0, color: BRASS }, chartEl, VALUE_COUNTER ? fmtFull(0) : tagText);
+            gsap.set(tagEl, { xPercent: -50, yPercent: -100 });
+            circleD = handCircle(px, py, rx, ry);
+            vLabels.push({ el: tagEl, v: d.value, full: true });
+          } else {
+            const gap = CHART_TYPE === "line" ? 26 : 14;
+            const el = H(
+              "t vlab",
+              { left: px + "px", top: py - gap + "px", fontSize: valueFs + "px", opacity: 0 },
+              chartEl,
+              VALUE_COUNTER ? fmtFull(0) : fmtFull(d.value),
+            );
+            gsap.set(el, { xPercent: -50, yPercent: -100 });
+            vLabels.push({ el, v: d.value, full: true });
+          }
+        });
+        const circleEl = circleD ? inkPath(gTop, circleD, BLUE, 6) : null;
+
+        // ============================================================================
+        // TIMELINE (all times relative to START_TIME; compressed only if DURATION is too short)
+        // ============================================================================
+        const tl = gsap.timeline({ paused: true });
+        const EXIT = 0.45;
+        const buildEnd = 0.9 + DRAW_DURATION + 0.7 + 0.5;
+        const K = Math.min(1, (DURATION - EXIT - 0.1) / buildEnd);
+        const at = (t) => START_TIME + t * K;
+        const dr = (d) => d * K;
+
+        // SFX = named markers only (no audio is rendered). Max one per second.
+        const SFX = [];
+        function sfx(name, t) {
+          const last = SFX[SFX.length - 1];
+          if (last && t - last.t < 1) t = last.t + 1;
+          if (t > START_TIME + DURATION - EXIT) return;
+          SFX.push({ name, t: Math.round(t * 1000) / 1000 });
+          tl.addLabel("sfx:" + name, t);
+        }
+
+        // 0.0 — paper enters
+        sfx("paper-rustle", START_TIME);
+        const EN = dr(0.6);
+        if (ENTER === "drop") {
+          tl.fromTo(enterEl, { y: -2000, rotation: -2.5 }, { y: 0, rotation: 0, duration: EN, ease: "power3.out" }, at(0));
+        } else if (ENTER === "slide-left") {
+          tl.fromTo(enterEl, { x: -1100 }, { x: 0, duration: EN, ease: "power3.out" }, at(0));
+        } else {
+          tl.fromTo(enterEl, { scale: 0.88, opacity: 0 }, { scale: 1, opacity: 1, duration: EN, ease: "power3.out" }, at(0));
+        }
+
+        // 0.4 — axes draw on (0.5s), title fades up, grid and labels step in
+        tl.fromTo(titleEl, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: dr(0.45), ease: "power2.out" }, at(0.4));
+        axisPaths.forEach((p) => {
+          tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: 0.01 }, at(0.4));
+          tl.fromTo(p, { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: dr(0.5), ease: "power1.inOut" }, at(0.4));
+        });
+        gridLines.forEach((g, i) => tl.to(g, { opacity: 1, duration: dr(0.25) }, at(0.7 + i * 0.07)));
+        yLabels.forEach((el, i) => tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: dr(0.25) }, at(0.75 + i * 0.05)));
+        xLabels.forEach((el, i) => tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: dr(0.25) }, at(0.75 + i * 0.05)));
+
+        // 0.9 — data draws / grows
+        const t0 = 0.9;
+        const D = DRAW_DURATION;
+        if (lineInfo) {
+          const ease = gsap.parseEase("sine.inOut");
+          const timeFor = (p) => {
+            let lo = 0;
+            let hi = 1;
+            for (let i = 0; i < 30; i++) {
+              const mid = (lo + hi) / 2;
+              if (ease(mid) < p) lo = mid;
+              else hi = mid;
+            }
+            return hi;
+          };
+          [lineInfo.main, lineInfo.pencil].forEach((p) => {
+            if (!p) return;
+            tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: 0.01 }, at(t0));
+            tl.fromTo(p, { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: dr(D), ease: "sine.inOut" }, at(t0));
+          });
+          lineInfo.markers.forEach((m, i) => {
+            tl.fromTo(m, { attr: { r: 0 } }, { attr: { r: 13 }, duration: dr(0.25), ease: "back.out(2)" }, at(t0 + D * timeFor(lineInfo.anchorFrac[i])));
+          });
+        } else {
+          const stag = n > 1 ? Math.min(0.15, (D - 0.45) / (n - 1)) : 0;
+          const grow = Math.max(0.45, D - stag * (n - 1));
+          barInfo.forEach((b, i) => {
+            const s = t0 + i * stag;
+            tl.fromTo(b.g, { opacity: 0 }, { opacity: 1, duration: 0.01 }, at(s));
+            b.rects.forEach((r) => {
+              tl.fromTo(
+                r.el,
+                { attr: { y: plot.b, height: 0 } },
+                { attr: { y: b.top + r.dy, height: Math.max(0, b.h - r.dy) }, duration: dr(grow), ease: "power2.out" },
+                at(s),
+              );
+            });
+          });
+        }
+
+        // after the draw — value labels tick up, highlight circle draws on
+        const tC = t0 + D;
+        vLabels.forEach((L) => {
+          tl.fromTo(L.el, { opacity: 0 }, { opacity: 1, duration: dr(0.25), ease: "power1.out" }, at(tC));
+          if (VALUE_COUNTER) {
+            const proxy = { v: 0 };
+            tl.fromTo(
+              proxy,
+              { v: 0 },
+              {
+                v: L.v,
+                duration: dr(0.7),
+                ease: "power2.out",
+                onUpdate: () => {
+                  L.el.textContent = fmtFull(proxy.v);
+                },
+              },
+              at(tC),
+            );
+          }
+        });
+        if (VALUE_COUNTER) sfx("tick", at(tC));
+        if (circleEl) {
+          const tc = tC + 0.7;
+          tl.fromTo(circleEl, { opacity: 0 }, { opacity: 1, duration: 0.01 }, at(tc));
+          tl.fromTo(circleEl, { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: dr(0.5), ease: "power1.inOut" }, at(tc));
+          if (VALUE_IS_MONEY) sfx("ching", at(tc + 0.35));
+        }
+
+        // last 0.6s — hold, then exit (reverse of the entry direction, never a hard cut)
+        const tx = START_TIME + DURATION - EXIT;
+        const keep = { immediateRender: false, duration: EXIT, ease: "power2.in" };
+        if (ENTER === "drop") {
+          tl.fromTo(enterEl, { y: 0, rotation: 0 }, { y: 2000, rotation: 2, ...keep }, tx);
+        } else if (ENTER === "slide-left") {
+          tl.fromTo(enterEl, { x: 0 }, { x: -1100, ...keep }, tx);
+        } else {
+          tl.fromTo(enterEl, { scale: 1, opacity: 1 }, { scale: 1.08, opacity: 0, ...keep }, tx);
+        }
+
+        // composition length = START_TIME + DURATION
+        tl.to({}, { duration: 0.001 }, START_TIME + DURATION - 0.001);
+
+        window.__sfxMarkers = SFX;
+        root.setAttribute("data-sfx-markers", JSON.stringify(SFX));
+        window.__timelines["sketch-chart"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>
