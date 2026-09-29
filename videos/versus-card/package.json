@@ -1,0 +1,13 @@
+{
+  "name": "versus-card",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.92 preview",
+    "check": "npx --yes hyperframes@0.8.92 check",
+    "render": "npx --yes hyperframes@0.8.92 render --fps 30",
+    "publish": "npx --yes hyperframes@0.8.92 publish",
+    "render:green": "npx --yes hyperframes@0.8.92 render --fps 30 --variables '{\"bg_mode\":\"green\"}' -o renders/versus-card-green.mp4",
+    "render:overlay": "npx --yes hyperframes@0.8.92 render --fps 30 --format webm -o renders/versus-card-overlay.webm"
+  }
+}

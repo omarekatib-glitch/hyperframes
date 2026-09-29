@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="ar" data-composition-variables='[{"id":"bg_mode","type":"enum","label":"BG_MODE","default":"paper","options":[{"value":"paper","label":"Paper (wrinkled cream sheet)"},{"value":"green","label":"Green (flat #00FF00 for Ultra Key)"}]},{"id":"winner","type":"enum","label":"WINNER","default":"none","options":[{"value":"left","label":"Left"},{"value":"right","label":"Right"},{"value":"none","label":"None"}]},{"id":"vs_badge_text","type":"string","label":"VS_BADGE_TEXT","default":"VS","maxLength":4},{"id":"start_time","type":"number","label":"START_TIME (s)","default":0,"min":0,"max":60,"step":0.1,"unit":"s"},{"id":"duration","type":"number","label":"DURATION (s)","default":5,"min":3,"max":12,"step":0.1,"unit":"s"},{"id":"x_pct","type":"number","label":"POSITION x_pct","default":50,"min":0,"max":100,"step":0.5,"unit":"%"},{"id":"y_pct","type":"number","label":"POSITION y_pct","default":50,"min":0,"max":100,"step":0.5,"unit":"%"},{"id":"scale","type":"number","label":"SCALE","default":1,"min":0.5,"max":1.08,"step":0.01},{"id":"row_stagger","type":"number","label":"ROW_STAGGER (s)","default":0.5,"min":0.2,"max":1.5,"step":0.05,"unit":"s"},{"id":"enter","type":"enum","label":"ENTER","default":"slide-sides","options":[{"value":"drop","label":"Drop"},{"value":"slide-sides","label":"Slide from sides"},{"value":"push-in","label":"Push-in"}]},{"id":"label_lang_left","type":"enum","label":"LABEL_LANG (left)","default":"ar","options":[{"value":"ar","label":"Arabic (RTL, Cairo)"},{"value":"en","label":"English (LTR, Montserrat)"}]},{"id":"label_lang_right","type":"enum","label":"LABEL_LANG (right)","default":"ar","options":[{"value":"ar","label":"Arabic (RTL, Cairo)"},{"value":"en","label":"English (LTR, Montserrat)"}]},{"id":"left_title","type":"string","label":"LEFT title","default":"Equity","maxLength":24},{"id":"left_r1_label","type":"string","label":"LEFT row 1 label","default":"العائد","maxLength":24},{"id":"left_r1_value","type":"string","label":"LEFT row 1 value","default":"12%","maxLength":24},{"id":"left_r1_type","type":"enum","label":"LEFT row 1 type","default":"percent","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"left_r2_label","type":"string","label":"LEFT row 2 label","default":"المخاطرة","maxLength":24},{"id":"left_r2_value","type":"string","label":"LEFT row 2 value","default":"عالية","maxLength":24},{"id":"left_r2_type","type":"enum","label":"LEFT row 2 type","default":"text","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"left_r3_label","type":"string","label":"LEFT row 3 label","default":"","maxLength":24},{"id":"left_r3_value","type":"string","label":"LEFT row 3 value","default":"","maxLength":24},{"id":"left_r3_type","type":"enum","label":"LEFT row 3 type","default":"text","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"left_r4_label","type":"string","label":"LEFT row 4 label","default":"","maxLength":24},{"id":"left_r4_value","type":"string","label":"LEFT row 4 value","default":"","maxLength":24},{"id":"left_r4_type","type":"enum","label":"LEFT row 4 type","default":"text","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"right_title","type":"string","label":"RIGHT title","default":"Fixed Income","maxLength":24},{"id":"right_r1_label","type":"string","label":"RIGHT row 1 label","default":"العائد","maxLength":24},{"id":"right_r1_value","type":"string","label":"RIGHT row 1 value","default":"9%","maxLength":24},{"id":"right_r1_type","type":"enum","label":"RIGHT row 1 type","default":"percent","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"right_r2_label","type":"string","label":"RIGHT row 2 label","default":"المخاطرة","maxLength":24},{"id":"right_r2_value","type":"string","label":"RIGHT row 2 value","default":"منخفضة","maxLength":24},{"id":"right_r2_type","type":"enum","label":"RIGHT row 2 type","default":"text","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"right_r3_label","type":"string","label":"RIGHT row 3 label","default":"","maxLength":24},{"id":"right_r3_value","type":"string","label":"RIGHT row 3 value","default":"","maxLength":24},{"id":"right_r3_type","type":"enum","label":"RIGHT row 3 type","default":"text","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]},{"id":"right_r4_label","type":"string","label":"RIGHT row 4 label","default":"","maxLength":24},{"id":"right_r4_value","type":"string","label":"RIGHT row 4 value","default":"","maxLength":24},{"id":"right_r4_type","type":"enum","label":"RIGHT row 4 type","default":"text","options":[{"value":"money","label":"Money (brass, counts up)"},{"value":"percent","label":"Percent (brass, counts up)"},{"value":"text","label":"Text (Cairo Bold)"}]}]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>versus-card</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      /* Brand fonts only. Arabic subset + Latin subset share one family via unicode-range. */
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 400;
+        src: url("assets/fonts/cairo-arabic-400-normal.woff2") format("woff2");
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF,
+          U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 400;
+        src: url("assets/fonts/cairo-latin-400-normal.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 700;
+        src: url("assets/fonts/cairo-arabic-700-normal.woff2") format("woff2");
+        unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF,
+          U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+      }
+      @font-face {
+        font-family: "Cairo";
+        font-weight: 700;
+        src: url("assets/fonts/cairo-latin-700-normal.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+          U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-weight: 600;
+        src: url("assets/fonts/montserrat-latin-600-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-weight: 800;
+        src: url("assets/fonts/montserrat-latin-800-normal.woff2") format("woff2");
+      }
+
+      :root {
+        --charcoal: #2c2c2c;
+        --cream: #f5f0e8;
+        --blue: #1d6fa4;
+        --brass: #c9a04a;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: transparent;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Cairo", "Montserrat", sans-serif;
+        color: var(--charcoal);
+      }
+
+      /* ---- paper sheet (paper mode only; overscanned so filter edges sit outside the frame) ---- */
+      #vc-sheet {
+        position: absolute;
+        left: -40px;
+        top: -40px;
+        width: 1160px;
+        height: 2000px;
+        background: var(--cream);
+        filter: url(#vc-paper-sheet);
+      }
+
+      /* ---- stage: POSITION / SCALE live here ---- */
+      #vc-stage {
+        position: absolute;
+        width: 1000px;
+        display: flex;
+        gap: 16px;
+        align-items: stretch;
+      }
+      .vc-card {
+        position: relative;
+        width: 492px;
+        flex: none;
+      }
+      .vc-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 22px 28px 84px 28px;
+      }
+      #vc-card-left .vc-card-inner {
+        padding-right: 76px; /* inner side leaves room for the VS badge */
+      }
+      #vc-card-right .vc-card-inner {
+        padding-left: 76px;
+      }
+      #vc-card-left .vc-head {
+        margin-right: -54px;
+      }
+      #vc-card-right .vc-head {
+        margin-left: -54px;
+      }
+
+      .vc-plate {
+        position: absolute;
+        inset: 0;
+        background: var(--cream);
+      }
+      /* paper: torn edge + crumple lighting + subtle charcoal shadow */
+      .mode-paper #vc-card-left .vc-plate {
+        filter: url(#vc-paper-card-a) drop-shadow(0 3px 3px rgba(44, 44, 44, 0.35)) drop-shadow(0 18px 20px rgba(44, 44, 44, 0.4));
+      }
+      .mode-paper #vc-card-right .vc-plate {
+        filter: url(#vc-paper-card-b) drop-shadow(0 3px 3px rgba(44, 44, 44, 0.35)) drop-shadow(0 18px 20px rgba(44, 44, 44, 0.4));
+      }
+      /* green: solid clean cream plates, hard edges, no shadow, no filter (keys cleanly) */
+      .mode-green .vc-plate {
+        filter: none;
+        border-radius: 4px;
+      }
+      .mode-green #vc-sheet {
+        display: none;
+      }
+      .mode-green .vc-badge {
+        box-shadow: none;
+      }
+      .mode-paper .vc-badge {
+        filter: drop-shadow(0 8px 10px rgba(44, 44, 44, 0.32));
+      }
+
+      .vc-head {
+        position: relative;
+        height: 118px;
+        background: var(--blue);
+        color: var(--cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 0 16px;
+      }
+      .vc-title {
+        display: inline-block;
+        white-space: nowrap;
+        line-height: 1.2;
+        text-align: center;
+      }
+
+      .vc-rows {
+        position: relative;
+        margin-top: 24px;
+      }
+      .vc-row {
+        height: 232px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .vc-label {
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        line-height: 1.3;
+        color: var(--charcoal);
+        white-space: nowrap;
+      }
+      .vc-val {
+        height: 148px;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .vc-val .vc-txt {
+        display: inline-block;
+        white-space: nowrap;
+        line-height: 1.25;
+      }
+      /* money / percent: brass on a charcoal plate (brass on cream fails contrast) */
+      .vc-val.num {
+        background: var(--charcoal);
+        color: var(--brass);
+      }
+      /* text: charcoal Cairo Bold on an outlined cream plate */
+      .vc-val.txt {
+        background: var(--cream);
+        color: var(--charcoal);
+        border: 4px solid var(--charcoal);
+      }
+
+      /* Font roles. letter-spacing stays 0 on Arabic so glyphs never disconnect. */
+      .f-ar {
+        font-family: "Cairo", sans-serif;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+      .f-en {
+        font-family: "Montserrat", sans-serif;
+        font-weight: 600;
+      }
+      .f-num {
+        font-family: "Montserrat", sans-serif;
+        font-weight: 800;
+      }
+      .f-title-en {
+        font-family: "Montserrat", sans-serif;
+        font-weight: 800;
+      }
+
+      .vc-underline {
+        position: absolute;
+        left: 28px;
+        bottom: 22px;
+        width: 436px;
+        height: 40px;
+        overflow: visible;
+      }
+      .vc-underline path {
+        fill: none;
+        stroke: var(--blue);
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+      }
+
+      .vc-badge {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 124px;
+        height: 124px;
+        margin: -62px 0 0 -62px;
+        border-radius: 50%;
+        background: var(--blue);
+        border: 6px solid var(--charcoal);
+        color: var(--cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 50px;
+        z-index: 5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Filter defs: seeded turbulence only (deterministic). Lighting only ever darkens cream. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <filter id="vc-paper-sheet" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <feTurbulence type="turbulence" baseFrequency="0.0032 0.0048" numOctaves="2" seed="7" result="ridge" />
+          <feColorMatrix in="ridge" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -0.15" result="h" />
+          <feGaussianBlur in="h" stdDeviation="3" result="hb" /><feDiffuseLighting in="hb" lighting-color="#F5F0E8" surfaceScale="7" diffuseConstant="1.14" result="lit">
+            <feDistantLight azimuth="235" elevation="62" />
+          </feDiffuseLighting>
+          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="4" result="fiber" />
+          <feColorMatrix in="fiber" type="matrix" values="0 0 0 0 0.17  0 0 0 0 0.17  0 0 0 0 0.17  0 0 0 0.09 0" result="fiberTint" />
+          <feMerge><feMergeNode in="lit" /><feMergeNode in="fiberTint" /></feMerge>
+        </filter>
+        <filter id="vc-paper-card-a" x="-8%" y="-4%" width="116%" height="108%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" seed="3" result="edge" />
+          <feDisplacementMap in="SourceGraphic" in2="edge" scale="24" xChannelSelector="R" yChannelSelector="G" result="torn" />
+          <feTurbulence type="turbulence" baseFrequency="0.0075 0.0095" numOctaves="2" seed="21" result="ridge" />
+          <feColorMatrix in="ridge" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -0.15" result="h" />
+          <feGaussianBlur in="h" stdDeviation="3" result="hb" /><feDiffuseLighting in="hb" lighting-color="#F5F0E8" surfaceScale="4" diffuseConstant="1.14" result="lit">
+            <feDistantLight azimuth="235" elevation="62" />
+          </feDiffuseLighting>
+          <feComposite in="lit" in2="torn" operator="in" />
+        </filter>
+        <filter id="vc-paper-card-b" x="-8%" y="-4%" width="116%" height="108%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" seed="11" result="edge" />
+          <feDisplacementMap in="SourceGraphic" in2="edge" scale="24" xChannelSelector="R" yChannelSelector="G" result="torn" />
+          <feTurbulence type="turbulence" baseFrequency="0.0075 0.0095" numOctaves="2" seed="34" result="ridge" />
+          <feColorMatrix in="ridge" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -0.15" result="h" />
+          <feGaussianBlur in="h" stdDeviation="3" result="hb" /><feDiffuseLighting in="hb" lighting-color="#F5F0E8" surfaceScale="4" diffuseConstant="1.14" result="lit">
+            <feDistantLight azimuth="235" elevation="62" />
+          </feDiffuseLighting>
+          <feComposite in="lit" in2="torn" operator="in" />
+        </filter>
+      </defs>
+    </svg>
+
+    <!--
+      Composition length is inferred from the timeline (START_TIME + DURATION), so both stay editable.
+      All variables are declared on <html data-composition-variables>; the constants block in the
+      script mirrors them (LEFT / RIGHT are flattened to left_* / right_* fields, Studio has no object type).
+    -->
+    <div id="root" data-composition-id="versus-card" data-start="0" data-width="1080" data-height="1920">
+      <div id="vc-sheet"></div>
+      <div id="vc-stage">
+        <div id="vc-card-left" class="vc-card"></div>
+        <div id="vc-card-right" class="vc-card"></div>
+        <div id="vc-badge" class="vc-badge f-num"></div>
+      </div>
+      <!-- SFX = named markers only (no audio elements). Filled by the script; max one per second. -->
+      <ol id="vc-sfx-markers" hidden></ol>
+    </div>
+
+    <script>
+      /* =====================================================================
+         EDITABLE CONSTANTS (defaults). Each is overridable from Studio's variables
+         panel or `render --variables`; ids match data-composition-variables.
+         ===================================================================== */
+      const DEFAULTS = {
+        bg_mode: "paper", // BG_MODE: "paper" | "green"
+        winner: "none", // WINNER: "left" | "right" | "none"
+        vs_badge_text: "VS", // VS_BADGE_TEXT
+        start_time: 0, // START_TIME (s)
+        duration: 5, // DURATION (s)
+        x_pct: 50, // POSITION x_pct
+        y_pct: 50, // POSITION y_pct
+        scale: 1, // SCALE
+        row_stagger: 0.5, // ROW_STAGGER (s)
+        enter: "slide-sides", // ENTER: "drop" | "slide-sides" | "push-in"
+        label_lang_left: "ar", // LABEL_LANG (left): "ar" | "en"
+        label_lang_right: "ar", // LABEL_LANG (right): "ar" | "en"
+        // REPLACE WITH SOURCED DATA  (LEFT: title + up to 4 rows; type: money | percent | text)
+        left_title: "Equity",
+        left_r1_label: "العائد", left_r1_value: "12%", left_r1_type: "percent",
+        left_r2_label: "المخاطرة", left_r2_value: "عالية", left_r2_type: "text",
+        left_r3_label: "", left_r3_value: "", left_r3_type: "text",
+        left_r4_label: "", left_r4_value: "", left_r4_type: "text",
+        // REPLACE WITH SOURCED DATA  (RIGHT: same shape)
+        right_title: "Fixed Income",
+        right_r1_label: "العائد", right_r1_value: "9%", right_r1_type: "percent",
+        right_r2_label: "المخاطرة", right_r2_value: "منخفضة", right_r2_type: "text",
+        right_r3_label: "", right_r3_value: "", right_r3_type: "text",
+        right_r4_label: "", right_r4_value: "", right_r4_type: "text",
+      };
+      const V = Object.assign({}, DEFAULTS, window.__hyperframes.getVariables());
+
+      const BG_MODE = V.bg_mode === "green" ? "green" : "paper";
+      const WINNER = V.winner === "left" || V.winner === "right" ? V.winner : "none";
+      const VS_BADGE_TEXT = String(V.vs_badge_text);
+      const START_TIME = Math.max(0, Number(V.start_time));
+      const DURATION = Math.max(3, Number(V.duration));
+      const POSITION = { x_pct: Number(V.x_pct), y_pct: Number(V.y_pct) };
+      const SCALE = Number(V.scale);
+      const ROW_STAGGER = Math.max(0.1, Number(V.row_stagger));
+      const ENTER = ["drop", "slide-sides", "push-in"].includes(V.enter) ? V.enter : "slide-sides";
+      const LABEL_LANG = {
+        left: V.label_lang_left === "en" ? "en" : "ar",
+        right: V.label_lang_right === "en" ? "en" : "ar",
+      };
+      const readSide = (s) => ({
+        title: String(V[s + "_title"]),
+        rows: [1, 2, 3, 4]
+          .map((i) => ({
+            label: String(V[`${s}_r${i}_label`]),
+            value: String(V[`${s}_r${i}_value`]),
+            type: ["money", "percent", "text"].includes(V[`${s}_r${i}_type`]) ? V[`${s}_r${i}_type`] : "text",
+          }))
+          .filter((r) => r.label.trim() !== "" || r.value.trim() !== ""),
+      });
+      // REPLACE WITH SOURCED DATA
+      const LEFT = readSide("left");
+      // REPLACE WITH SOURCED DATA
+      const RIGHT = readSide("right");
+
+      /* ===================================================================== */
+      const ARABIC = /[؀-ۿ]/;
+      const EXIT_LEN = 0.6;
+      const root = document.getElementById("root");
+      root.classList.add("mode-" + BG_MODE);
+      if (BG_MODE === "green") root.style.background = "#00FF00"; // Ultra Key ground; no green anywhere else
+
+      const el = (tag, cls, text) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined) n.textContent = text;
+        return n;
+      };
+      const fit = (node, maxW, start, min) => {
+        let s = start;
+        node.style.fontSize = s + "px";
+        while (node.scrollWidth > maxW && s > min) {
+          s -= 2;
+          node.style.fontSize = s + "px";
+        }
+      };
+      // "$1,250.5M" -> { prefix, target, decimals, grouped, suffix }
+      const parseNum = (str) => {
+        const m = str.trim().match(/^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/);
+        if (!m) return null;
+        return {
+          prefix: m[1],
+          target: parseFloat(m[2].replace(/,/g, "")),
+          decimals: (m[2].split(".")[1] || "").length,
+          grouped: m[2].includes(","),
+          suffix: m[3],
+        };
+      };
+      const fmt = (p, v) => {
+        let s = v.toFixed(p.decimals);
+        if (p.grouped) {
+          const [i, d] = s.split(".");
+          s = i.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (d ? "." + d : "");
+        }
+        return p.prefix + s + p.suffix;
+      };
+
+      const build = () => {
+        const n = Math.max(LEFT.rows.length, RIGHT.rows.length, 1);
+        const cards = {};
+
+        [["left", LEFT], ["right", RIGHT]].forEach(([side, data]) => {
+          const card = document.getElementById("vc-card-" + side);
+          const inner = el("div", "vc-card-inner");
+          inner.appendChild(el("div", "vc-plate"));
+
+          const head = el("div", "vc-head");
+          const title = el("span", "vc-title " + (ARABIC.test(data.title) ? "f-ar" : "f-title-en"), data.title);
+          title.dir = ARABIC.test(data.title) ? "rtl" : "ltr";
+          head.appendChild(title);
+          inner.appendChild(head);
+
+          const rowsBox = el("div", "vc-rows");
+          const rowRefs = [];
+          for (let i = 0; i < n; i++) {
+            const r = data.rows[i];
+            const row = el("div", "vc-row");
+            const label = el("div", "vc-label " + (LABEL_LANG[side] === "ar" ? "f-ar" : "f-en"), r ? r.label : "");
+            label.dir = LABEL_LANG[side] === "ar" ? "rtl" : "ltr";
+            const isNum = r && (r.type === "money" || r.type === "percent");
+            const val = el("div", "vc-val " + (isNum ? "num" : "txt"));
+            const txt = el("span", "vc-txt " + (isNum ? "f-num" : ARABIC.test(r ? r.value : "") ? "f-ar" : "f-en"), r ? r.value : "");
+            txt.dir = isNum ? "ltr" : ARABIC.test(r ? r.value : "") ? "rtl" : "ltr";
+            val.appendChild(txt);
+            row.append(label, val);
+            rowsBox.appendChild(row);
+            if (!r) {
+              row.style.visibility = "hidden";
+            }
+            rowRefs.push({ row, label, val, txt, r, isNum });
+          }
+          inner.appendChild(rowsBox);
+
+          // hand-drawn underline (winner only)
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("class", "vc-underline");
+          svg.setAttribute("viewBox", "0 0 436 40");
+          const p1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          p1.setAttribute("d", "M8 14 C 70 6, 130 22, 200 12 S 330 6, 428 15");
+          p1.setAttribute("pathLength", "1");
+          const p2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          p2.setAttribute("d", "M40 30 C 110 24, 190 34, 262 27 S 360 26, 404 30");
+          p2.setAttribute("pathLength", "1");
+          svg.append(p1, p2);
+          inner.appendChild(svg);
+
+          card.appendChild(inner);
+          cards[side] = { card, inner, title, head, rowRefs, p1, p2 };
+        });
+
+        // size text to fit; runs once fonts are loaded (layout is fixed-size, so the timeline never depends on it)
+        const fitAll = () => {
+          Object.values(cards).forEach((c) => {
+            fit(c.title, 384, 46, 26);
+            c.rowRefs.forEach(({ label, txt, isNum, r }) => {
+              if (!r) return;
+              fit(label, 402, 40, 26);
+              fit(txt, 352, isNum ? 92 : 64, 30);
+            });
+          });
+        };
+
+        const badge = document.getElementById("vc-badge");
+        badge.textContent = VS_BADGE_TEXT;
+        badge.style.fontSize = VS_BADGE_TEXT.length > 2 ? "36px" : "50px";
+
+        const stage = document.getElementById("vc-stage");
+        stage.style.left = POSITION.x_pct + "%";
+        stage.style.top = POSITION.y_pct + "%";
+        gsap.set(stage, { xPercent: -50, yPercent: -50, scale: SCALE });
+        gsap.set(badge, { rotation: -5 });
+
+        /* ------------------------------ timeline ------------------------------ */
+        const tl = gsap.timeline({ paused: true });
+        const T0 = START_TIME;
+        const exitAt = T0 + DURATION - EXIT_LEN;
+
+        // fit the build into the available time if ROW_STAGGER / row count overruns DURATION
+        const fixed = 0.7 + 0.1 + 0.3 + (WINNER !== "none" ? 0.8 : 0);
+        const scalable = (n - 1) * ROW_STAGGER + 0.25 + 0.6;
+        const k = Math.min(1, Math.max(0.35, (DURATION - EXIT_LEN - 0.25 - fixed) / scalable));
+        if (k < 1) console.warn("versus-card: build compressed to fit DURATION (k=" + k.toFixed(2) + ")");
+        const step = ROW_STAGGER * k;
+        const valOff = 0.25 * k;
+        const tickDur = 0.6 * k;
+
+        // 0.0s: paper + cards enter (0.5s, power3.out)
+        const ENT = { duration: 0.5, ease: "power3.out" };
+        const L = cards.left.card;
+        const R = cards.right.card;
+        if (ENTER === "slide-sides") {
+          tl.fromTo(L, { x: -1100, opacity: 1 }, { x: 0, ...ENT }, T0);
+          tl.fromTo(R, { x: 1100, opacity: 1 }, { x: 0, ...ENT }, T0);
+          tl.fromTo("#vc-sheet", { y: 2000 }, { y: 0, ...ENT }, T0);
+        } else if (ENTER === "drop") {
+          tl.fromTo(L, { y: -1500, rotation: -4 }, { y: 0, rotation: 0, ...ENT }, T0);
+          tl.fromTo(R, { y: -1500, rotation: 4 }, { y: 0, rotation: 0, ...ENT }, T0 + 0.08);
+          tl.fromTo("#vc-sheet", { y: -2000 }, { y: 0, ...ENT }, T0);
+        } else {
+          tl.fromTo(L, { scale: 1.18, opacity: 0 }, { scale: 1, opacity: 1, ...ENT }, T0);
+          tl.fromTo(R, { scale: 1.18, opacity: 0 }, { scale: 1, opacity: 1, ...ENT }, T0);
+          tl.fromTo("#vc-sheet", { scale: 1.15, opacity: 0 }, { scale: 1, opacity: 1, ...ENT }, T0);
+        }
+
+        // 0.5s: header bars wipe in from the outer edge, cream title follows
+        [["left", "right"], ["right", "left"]].forEach(([side]) => {
+          const c = cards[side];
+          const outer = side === "left" ? "left" : "right";
+          tl.fromTo(c.head, { clipPath: outer === "left" ? "inset(0 100% 0 0)" : "inset(0 0 0 100%)" }, { clipPath: "inset(0 0% 0 0%)", duration: 0.35, ease: "power3.out" }, T0 + 0.5);
+          tl.fromTo(c.title, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, T0 + 0.6);
+        });
+
+        // 0.7s onward: rows one at a time — label first, then value (ticks up when numeric)
+        const sfx = [{ t: T0, name: "paper-rustle" }];
+        let firstMoney = true;
+        let lastValueEnd = T0 + 0.7;
+        for (let i = 0; i < n; i++) {
+          const at = T0 + 0.7 + i * step;
+          ["left", "right"].forEach((side) => {
+            const ref = cards[side].rowRefs[i];
+            if (!ref.r) return;
+            const rtl = ref.txt.dir === "rtl";
+            tl.fromTo(ref.label, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, at);
+            tl.fromTo(ref.val, { clipPath: rtl ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0%)", duration: 0.28, ease: "power3.out" }, at + valOff);
+            const parsed = ref.isNum ? parseNum(ref.r.value) : null;
+            if (parsed) {
+              const proxy = { v: 0 };
+              ref.txt.textContent = fmt(parsed, 0);
+              tl.to(proxy, {
+                v: parsed.target,
+                duration: tickDur,
+                ease: "power2.out",
+                onUpdate: () => {
+                  ref.txt.textContent = fmt(parsed, proxy.v);
+                },
+              }, at + valOff);
+              // guarantee the exact authored string on the final frame
+              tl.set(ref.txt, { textContent: ref.r.value }, at + valOff + tickDur);
+              if (side === "left") {
+                if (ref.r.type === "money" && firstMoney) {
+                  firstMoney = false;
+                  sfx.push({ t: at + valOff, name: "ching" });
+                } else {
+                  sfx.push({ t: at + valOff, name: "tick" });
+                }
+              }
+            }
+            lastValueEnd = Math.max(lastValueEnd, at + valOff + Math.max(tickDur, 0.28));
+          });
+        }
+        // "ching" belongs to the first money value on either side
+        if (firstMoney) {
+          for (let i = 0; i < n && firstMoney; i++) {
+            const ref = cards.right.rowRefs[i];
+            if (ref.r && ref.r.type === "money" && parseNum(ref.r.value)) {
+              firstMoney = false;
+              sfx.push({ t: T0 + 0.7 + i * step + valOff, name: "ching" });
+            }
+          }
+        }
+
+        // after the last row: VS badge stamps in (120% -> 100% bounce)
+        const vsAt = lastValueEnd + 0.1;
+        tl.fromTo(badge, { opacity: 0, scale: 1.2 }, { opacity: 1, scale: 0.97, duration: 0.18, ease: "power3.in" }, vsAt);
+        tl.to(badge, { scale: 1, duration: 0.12, ease: "power2.out" }, vsAt + 0.18);
+
+        // winner: card scales to 1.04, hand-drawn blue underline draws on
+        if (WINNER !== "none") {
+          const w = cards[WINNER];
+          const wAt = vsAt + 0.3 + 0.3 * Math.min(1, k + 0.4);
+          w.card.style.zIndex = "2";
+          tl.fromTo(w.inner, { scale: 1 }, { scale: 1.04, duration: 0.35, ease: "power2.out", immediateRender: false }, wAt);
+          tl.fromTo(w.p1, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.45, ease: "power2.inOut", immediateRender: false }, wAt + 0.1);
+          tl.fromTo(w.p2, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.3, ease: "power2.inOut", immediateRender: false }, wAt + 0.45);
+        }
+
+        // last 0.6s: hold ends, both cards exit sideways (and the sheet leaves with them)
+        const EX = { duration: EXIT_LEN, ease: "power3.in", immediateRender: false };
+        tl.fromTo(L, { x: 0 }, { x: -1500, ...EX }, exitAt);
+        tl.fromTo(R, { x: 0 }, { x: 1500, ...EX }, exitAt);
+        tl.fromTo(badge, { opacity: 1 }, { opacity: 0, duration: 0.25, ease: "power2.in", immediateRender: false }, exitAt);
+        tl.fromTo("#vc-sheet", { y: 0 }, { y: 2000, ...EX }, exitAt);
+
+        // SFX markers: named only, never more than one per second, priority paper-rustle > ching > tick
+        const prio = { "paper-rustle": 0, ching: 1, tick: 2 };
+        const kept = [];
+        sfx
+          .sort((a, b) => prio[a.name] - prio[b.name] || a.t - b.t)
+          .forEach((m) => {
+            if (kept.every((o) => Math.abs(o.t - m.t) >= 1)) kept.push(m);
+          });
+        kept.sort((a, b) => a.t - b.t);
+        const list = document.getElementById("vc-sfx-markers");
+        kept.forEach((m) => {
+          const li = el("li");
+          li.dataset.sfx = m.name;
+          li.dataset.t = m.t.toFixed(2);
+          li.dataset.level = "under-voice";
+          list.appendChild(li);
+        });
+        window.__hfSfxMarkers = kept.map((m) => ({ t: +m.t.toFixed(2), name: m.name, level: "under-voice" }));
+
+        window.__timelines["versus-card"] = tl;
+        if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+        tl.seek(0);
+        return fitAll;
+      };
+
+      // Timeline registers synchronously (render length is probed from it); only text fitting waits for fonts.
+      const fitAll = build();
+      Promise.all([
+        document.fonts.load('700 40px "Cairo"', "العائد"),
+        document.fonts.load('700 40px "Cairo"', "Aa"),
+        document.fonts.load('400 40px "Cairo"', "Aa"),
+        document.fonts.load('800 90px "Montserrat"', "0123456789%$"),
+        document.fonts.load('600 40px "Montserrat"', "Aa"),
+      ]).then(fitAll, fitAll);
+    </script>
+  </body>
+</html>
