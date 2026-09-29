@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Split Frame</title>
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: transparent;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      SPLIT-FRAME demo host.
+
+      START_TIME  = data-start on the host clip below  (drag the clip on the Studio timeline)
+      DURATION    = data-duration on the host clip      (trim the clip; the template reads it)
+      Everything else (BG_MODE, FACE_*, TRANSITION_*, EASE, SHADOW_INTENSITY, DOT_GRID, ...)
+      lives in data-variable-values on the host. Keep SPLIT <= ~15s.
+      EXAMPLE: data-start="3" data-duration="12" data-variable-values='{"BG_MODE":"green"}'
+    -->
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="12"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div
+        id="split-frame"
+        class="clip"
+        data-composition-id="split-frame"
+        data-composition-src="compositions/split-frame.html"
+        data-start="0"
+        data-duration="12"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1080"
+        data-height="1920"
+        data-variable-values='{"BG_MODE":"paper","TRANSITION_IN":"scale-down","TRANSITION_OUT":"scale-up"}'
+      ></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

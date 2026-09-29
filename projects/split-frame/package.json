@@ -1,0 +1,12 @@
+{
+  "name": "split-frame",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.92 preview",
+    "check": "npx --yes hyperframes@0.8.92 check --at-transitions",
+    "render": "npx --yes hyperframes@0.8.92 render",
+    "publish": "npx --yes hyperframes@0.8.92 publish",
+    "render:paper-preview": "npx --yes hyperframes@0.8.92 render --fps 30 --output renders/split-frame_paper-preview.mp4"
+  }
+}
